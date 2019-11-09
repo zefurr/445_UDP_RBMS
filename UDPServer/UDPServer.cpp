@@ -18,18 +18,18 @@ int main()
 	cout << "\t1) Begin participant registration session\n";
 	cout << "\tX) Exit application\n";
 
-	cin >> cmd;
+	cin >> cmd; // Need to make sure we get valid input
 
 	if (cmd == "1") {
-		Listener udpServer;
-		udpServer.StartRegistration();
+		Listener* udpServer = Listener::getInstance();
+		udpServer->StartRegistration();
 
 		while (cmd != "END")
 		{
 			cout << "Enter \"END\" to stop soliciation of participants\n";
 			cin >> cmd;
 		}
-		udpServer.StopRegistration();
+		udpServer->StopRegistration();
 	}
 
 	// Should start a thread to handle room booking in the background around here

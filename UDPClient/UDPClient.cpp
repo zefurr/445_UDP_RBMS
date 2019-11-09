@@ -1,6 +1,7 @@
 #include "pch.h"
 #define _WINSOCK_DEPRECATED_NO_WARNINGS
 #include <iostream>
+#include <string>
 
 #include<stdio.h>
 #include<winsock2.h>
@@ -8,8 +9,36 @@
 #define SERVER "127.0.0.1"			// ip address of udp server
 #define BUFLEN 512					// Max length of buffer
 #define PORT 8888					// The port on which to listen for incoming data
-int main(void)
+
+int main()
 {
+	using namespace std;
+	string cmd;
+
+	cout << "Meeting Scheduler Client\n\n";
+
+	cout << "Choose an option:\n";
+	cout << "\t1) Register\n";
+	cout << "\tX) Exit application\n";
+
+	cin >> cmd; // Need to make sure we get valid input
+	cin.clear();
+
+	// flush the input so the newline character doesn't carry forwards
+	cin.ignore(INT_MAX, '\n'); 
+
+	//if (cmd == "1") {
+	//	Listener udpServer;
+	//	udpServer.StartRegistration();
+
+	//	while (cmd != "END")
+	//	{
+	//		cout << "Enter \"END\" to stop soliciation of participants\n";
+	//		cin >> cmd;
+	//	}
+	//	udpServer.StopRegistration();
+	//}
+
 	struct sockaddr_in si_other;
 	int s, slen = sizeof(si_other);
 	char buf[BUFLEN];

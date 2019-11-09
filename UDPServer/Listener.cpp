@@ -5,6 +5,17 @@
 #include <fstream>
 #include <string>
 
+Listener* Listener::_instance = 0;
+
+Listener* Listener::getInstance()
+{
+	if (!Listener::_instance)
+	{
+		Listener::_instance = new Listener();
+	}
+	return Listener::_instance;
+}
+
 Listener::Listener()
 {
 	// Initialize variables
@@ -176,18 +187,29 @@ void Listener::Register()
 void Listener::StartRegistration()
 {
 	RegistrationMode = true;
+
+	// TBD This will only ever be a single thread, maybe don't use a vector after all
 	m_Threads.push_back(new std::thread(&Listener::Register, this));
 }
 
 void Listener::StopRegistration()
 {
+	// Stop listening for new registrations
 	RegistrationMode = false;
+
+	// Join the thread(s) for registrations
 	for (std::thread* t : m_Threads)
 	{
 		t->join();
 		t->~thread();
 	}
 
-	// Send a list of all participants to each participant
-	// (so they can invite people to meetings)
+	// In pratice the participant list will be complete by now
+	// In theory, its possible some of the AddParticipant threads are still running
+	// Might need to let them resolve before proceeding.
+
+	// For each participant in the list, send the participant the full list
+
+	// Wait for their acknowledgement, otherwise send it up to two more times
+
 }

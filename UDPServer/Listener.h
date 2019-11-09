@@ -46,6 +46,11 @@
 
 struct Listener
 {
+private:
+	static Listener* _instance;
+	Listener();
+public:
+
 	SOCKET s;
 	struct sockaddr_in server, si_other;
 	int slen, recv_len, nready;
@@ -62,7 +67,7 @@ struct Listener
 	std::mutex readersMutex;
 	std::mutex exclusiveMutex;
 
-	Listener();
+	static Listener* getInstance();
 	void AddParticipant(sockaddr_in, std::vector<char>);
 	void Register();
 	void StartRegistration();
