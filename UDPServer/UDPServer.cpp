@@ -1,7 +1,7 @@
 #include "pch.h"
 #define _WINSOCK_DEPRECATED_NO_WARNINGS
 
-#include "Listener.h" // contains stdio.h, thread, vector, mutex
+#include "ServerSession.h" // contains stdio.h, thread, vector, mutex
 
 #include <iostream>
 #include <string>
@@ -21,15 +21,15 @@ int main()
 	cin >> cmd; // Need to make sure we get valid input
 
 	if (cmd == "1") {
-		Listener* udpServer = Listener::getInstance();
-		udpServer->StartRegistration();
+		ServerSession& udpServer = ServerSession::getInstance();
+		udpServer.StartRegistration();
 
 		while (cmd != "END")
 		{
 			cout << "Enter \"END\" to stop soliciation of participants\n";
 			cin >> cmd;
 		}
-		udpServer->StopRegistration();
+		udpServer.StopRegistration();
 	}
 
 	// Should start a thread to handle room booking in the background around here

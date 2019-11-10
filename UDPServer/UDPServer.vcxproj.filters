@@ -18,7 +18,7 @@
     <ClInclude Include="pch.h">
       <Filter>Header Files</Filter>
     </ClInclude>
-    <ClInclude Include="Listener.h">
+    <ClInclude Include="ServerSession.h">
       <Filter>Header Files</Filter>
     </ClInclude>
   </ItemGroup>
@@ -29,7 +29,7 @@
     <ClCompile Include="UDPServer.cpp">
       <Filter>Source Files</Filter>
     </ClCompile>
-    <ClCompile Include="Listener.cpp">
+    <ClCompile Include="ServerSession.cpp">
       <Filter>Source Files</Filter>
     </ClCompile>
   </ItemGroup>
