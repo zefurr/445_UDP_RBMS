@@ -1,7 +1,7 @@
 #include "pch.h"
 #define _WINSOCK_DEPRECATED_NO_WARNINGS
 
-#include "Listener.h" // contains stdio.h, thread, vector, mutex
+#include "ServerSession.h" // contains stdio.h, thread, vector, mutex
 
 #include <iostream>
 #include <string>
@@ -18,10 +18,10 @@ int main()
 	cout << "\t1) Begin participant registration session\n";
 	cout << "\tX) Exit application\n";
 
-	cin >> cmd;
+	cin >> cmd; // Need to make sure we get valid input
 
 	if (cmd == "1") {
-		Listener udpServer;
+		ServerSession& udpServer = ServerSession::getInstance();
 		udpServer.StartRegistration();
 
 		while (cmd != "END")
