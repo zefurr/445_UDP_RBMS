@@ -1,4 +1,6 @@
 #include "pch.h"
+#include "Message.h"
+//#include "TimeSlot.h"
 #define _WINSOCK_DEPRECATED_NO_WARNINGS
 
 #include <winsock2.h>
@@ -16,12 +18,6 @@
 #define TIMEOUT_SECONDS 2
 #define TIMEOUT_uSECONDS 100000 // 0.1 seconds
 
-// definitions for messages received from clients
-#define MSG_REG "REGISTER"
-
-// definitions for messaged send by the server
-#define ACK_REG "ACK_REGISTER"
-
 struct ServerSession
 {
 private:
@@ -29,12 +25,12 @@ private:
 
 	SOCKET s;
 	struct sockaddr_in server, si_other;
+	//char buf[BUFLEN]; // define it local to each use of buffer instead
 	int slen, recv_len;
-	char buf[BUFLEN];
 	WSADATA wsa;
-	fd_set fdset;
 	struct timeval timeLimit;
 	std::vector<std::thread*> m_Threads;
+	std::vector<std::string> m_partyList;
 	bool RegistrationMode;
 
 	// Mutexes related to registering participants
@@ -45,6 +41,10 @@ private:
 
 public:
 	static ServerSession& getInstance();
+
+	void SendMessage(sockaddr_in, BaseMessage); // Send a message, no acknowledgement needed
+	bool SendMessageAndAck(sockaddr_in, BaseMessage); // Send a message, wait for acknowledgement
+
 	void AddParticipant(sockaddr_in, std::vector<char>);
 	void Register();
 	void StartRegistration();

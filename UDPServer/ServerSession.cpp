@@ -1,10 +1,86 @@
 #include "pch.h"
 #include "ServerSession.h" // contains stdio.h, thread, vector, mutex
+#include "Message.h""
 #include <iostream>
 #include <iterator>
 #include <sstream>
 #include <fstream>
 #include <string>
+
+void ServerSession::SendMessage(sockaddr_in destination, BaseMessage msg)
+{
+
+}
+
+bool ServerSession::SendMessageAndAck(sockaddr_in destination, BaseMessage msg)
+{
+	using namespace std;
+
+	string client_addr;
+	stringstream ss;
+	ss << inet_ntoa(destination.sin_addr) << ":" << ntohs(destination.sin_port);
+	client_addr = ss.str();
+
+	cout << "Sending + Ack to  " << client_addr << endl;
+
+	fd_set fdset;		// for use with select()
+	FD_ZERO(&fdset);	// for use with select()
+
+	char buf[BUFLEN];
+
+	int count_timeouts = 0;
+	//start communication
+	while (count_timeouts < MAXIMUM_TIMEOUTS && strcmp(buf, ACK_REG) != 0)
+	{
+		//send the message
+		if (sendto(s, (char*)&msg, sizeof(msg), 0, (struct sockaddr *) &destination, slen) == SOCKET_ERROR)
+		{
+			printf("sendto() failed with error code : %d", WSAGetLastError());
+			exit(EXIT_FAILURE);
+		}
+
+		//receive a reply and print it
+		//clear the buffer by filling null, it might have previously received data
+		memset(buf, '\0', BUFLEN);
+
+		//FD_ZERO(&fdset);
+		FD_SET(s, &fdset); // Monitor socket s, select will return when it is ready to be read
+		// Select will return when something is available to be read on the socket, or on timeout
+		select(s + 1, &fdset, NULL, NULL, &timeLimit);
+
+		// If there is something ready to be read on the socket
+		if (FD_ISSET(s, &fdset))
+		{
+			//try to receive some data, this is a blocking call
+			if (recvfrom(s, buf, BUFLEN, 0, (struct sockaddr *) &destination, &slen) == SOCKET_ERROR)
+			{
+				printf("recvfrom() failed with error code : %d", WSAGetLastError());
+				exit(EXIT_FAILURE);
+			}
+			
+			puts(buf);
+		}
+		else
+		{
+			count_timeouts++;
+			printf("TIMEOUT - Attempts: %d\n", count_timeouts);
+		}
+	}
+	if (count_timeouts >= MAXIMUM_TIMEOUTS)
+	{
+		printf("FAILED to send message after %d attempts.\n", MAXIMUM_TIMEOUTS);
+		return false;
+	}
+	else
+	{
+		// Reply was received
+	}
+
+	closesocket(s);
+	WSACleanup();
+
+	return true;
+}
 
 ServerSession& ServerSession::getInstance()
 {
@@ -16,7 +92,7 @@ ServerSession::ServerSession()
 {
 	// Initialize variables
 	slen = sizeof(si_other);
-	FD_ZERO(&fdset); // for use with select()
+
 	timeLimit.tv_sec = TIMEOUT_SECONDS;
 	timeLimit.tv_usec = TIMEOUT_uSECONDS;
 	RegistrationMode = false;
@@ -140,6 +216,9 @@ void ServerSession::Register()
 	// Listen for incoming registration requests
 	// Dispatch valid requests to be registered
 	// Ignore invalid messages
+	fd_set fdset;		// for use with select()
+	FD_ZERO(&fdset);	// for use with select()
+	char buf[BUFLEN];
 
 	while (RegistrationMode)
 	{
@@ -165,8 +244,10 @@ void ServerSession::Register()
 				exit(EXIT_FAILURE);
 			}
 
+			puts(buf);
+
 			// Read the data to determine if it's a valid registration request
-			if (strcmp(buf, MSG_REG) == 0) // If it's valid (TBD this is kind of brute force)
+			if (strcmp(buf, MSG_REG) == 0)
 			{
 				// Reply to the client with an acknowledgement
 				std::string ack_reg = ACK_REG;
@@ -178,8 +259,8 @@ void ServerSession::Register()
 
 				// To avoid blocking for I/O create a thread to interact with the participant list
 				std::vector<char> temp(&buf[0], &buf[BUFLEN]); // copy the buffer content into a vector so we can pass it by value
-				std::thread th(&ServerSession::AddParticipant, this, si_other, temp);
-				th.detach(); // Let this complete in the background || is this wise?
+				m_Threads.push_back(new std::thread(&ServerSession::AddParticipant, this, si_other, temp));
+				//th.detach(); // Let this complete in the background || is this wise?
 			}
 			// Else we do nothing (unsolicited message)
 		}
@@ -188,8 +269,8 @@ void ServerSession::Register()
 	// Registration session terminated by user
 
 	// TBD during development we use ports to distinguish clients and ports change when sockets change, so we dont want to close these
-	closesocket(s);
-	WSACleanup();
+	/*closesocket(s);
+	WSACleanup();*/
 }
 
 void ServerSession::StartRegistration()
@@ -202,6 +283,8 @@ void ServerSession::StartRegistration()
 
 void ServerSession::StopRegistration()
 {
+	using namespace std;
+
 	// Stop listening for new registrations
 	RegistrationMode = false;
 
@@ -220,6 +303,34 @@ void ServerSession::StopRegistration()
 
 
 	// For each participant in the list, send the participant the full list
+	orderMutex.lock();			// Maintain the order of arrival
+	readersMutex.lock();		// We will manipulate the readers counter
+	if (readers == 0) {			// If we are currently no readers
+		exclusiveMutex.lock();	// Get exclusive access for the readers
+	}
+	readers++;
+	orderMutex.unlock();		// We have been served
+	readersMutex.unlock();		// We are finished manipulating the readers count
+
+	// Read the participant list
+	ifstream ifs("Participants.txt");
+	if (ifs.is_open())
+	{
+		string line;
+		while (getline(ifs, line))
+		{
+			// Build the session participant list in memory
+			m_partyList.push_back(line);
+		}
+	}
+
+	exclusiveMutex.unlock();
+
+	SessionStartMsg ssm(MSG_START, m_partyList);
+	SendMessageAndAck(si_other, ssm);
+
+	system("pause");
+
 		// TBD
 	// Wait for their acknowledgement, otherwise send it up to two more times
 		// TBD - See client timeout implementation for reference

@@ -16,7 +16,7 @@ ClientSession::ClientSession()
 {
 	// Initialize variables
 	slen = sizeof(si_other);
-	FD_ZERO(&fdset); // for use with select()
+	
 	timeLimit.tv_sec = TIMEOUT_SECONDS;
 	timeLimit.tv_usec = TIMEOUT_uSECONDS;
 
@@ -43,6 +43,9 @@ ClientSession::ClientSession()
 
 void ClientSession::Register()
 {
+	fd_set fdset;
+	FD_ZERO(&fdset); // for use with select()
+
 	int count_timeouts = 0;
 	//start communication
 	while (count_timeouts < MAXIMUM_TIMEOUTS && strcmp(buf, ACK_REG) != 0)
@@ -74,6 +77,13 @@ void ClientSession::Register()
 				exit(EXIT_FAILURE);
 			}
 			puts(buf);
+
+			std::string client_addr;
+			std::stringstream ss;
+			ss << inet_ntoa(si_other.sin_addr) << ":" << ntohs(si_other.sin_port);
+			client_addr = ss.str();
+
+			std::cout << "Received from   " << client_addr << std::endl;
 		}
 		else
 		{
@@ -89,6 +99,20 @@ void ClientSession::Register()
 	{
 		// Now we wait for the server to send us the participants list
 			// TBD
+
+		printf("Waiting for participants list.\n");
+
+		//clear the buffer by filling null, it might have previously received data
+		memset(buf, '\0', BUFLEN);
+
+		if (recvfrom(s, buf, BUFLEN, 0, (struct sockaddr *) &si_other, &slen) == SOCKET_ERROR)
+		{
+			printf("recvfrom() failed with error code : %d", WSAGetLastError());
+			exit(EXIT_FAILURE);
+		}
+
+		/*SessionStartMsg ssm = (SessionStartMessage*)buf;*/
+		puts(buf);
 	}
 	
 	closesocket(s);

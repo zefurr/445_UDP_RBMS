@@ -1,6 +1,6 @@
 #include "pch.h"
 #define _WINSOCK_DEPRECATED_NO_WARNINGS
-
+#include "Message.h"
 #include <winsock2.h>
 #include <stdio.h>
 #include <thread>
@@ -16,14 +16,6 @@
 #define TIMEOUT_SECONDS 2
 #define TIMEOUT_uSECONDS 100000 // 0.1 seconds
 
-// definitions for messages sent by the client
-#define MSG_REG "REGISTER"
-	// add as required, mirror to ServerSession.h
-
-// definitions for messaged received from the server
-#define ACK_REG "ACK_REGISTER"
-	// add as required, mirror to ServerSession.h
-
 struct ClientSession
 {
 private:
@@ -34,7 +26,6 @@ private:
 	char buf[BUFLEN];
 	char message[BUFLEN];
 	WSADATA wsa;
-	fd_set fdset;
 	struct timeval timeLimit;
 	std::vector<std::thread*> m_Threads;
 	bool RegistrationMode;
