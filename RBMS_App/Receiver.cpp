@@ -1,14 +1,14 @@
 #include "pch.h"
-#include "Listener.h"
+#include "Receiver.h"
 
 using namespace std;
 
-Listener& Listener::getInstance() {
-	static Listener _instance;
+Receiver& Receiver::getInstance() {
+	static Receiver _instance;
 	return _instance;
 }
 
-Listener::Listener()
+Receiver::Receiver()
 {
 	// Setup socket for receiving
 }
@@ -16,7 +16,7 @@ Listener::Listener()
 // Runs in a thread to wait for incoming messages
 // Blocks while waiting to receive
 // This is a producer for the Logic function
-void Listener::Listen() {
+void Receiver::Listen() {
 	while (m_Alive) {
 
 		// Listen for a message
@@ -27,14 +27,14 @@ void Listener::Listen() {
 	}
 }
 
-void Listener::Startup()
+void Receiver::Startup()
 {
 	m_Alive = true;
 
-	m_ListeningThread = new thread{ &Listener::Listen, this };
+	m_ListeningThread = new thread{ &Receiver::Listen, this };
 }
 
-void Listener::Shutdown()
+void Receiver::Shutdown()
 {
 	m_Alive = false;
 

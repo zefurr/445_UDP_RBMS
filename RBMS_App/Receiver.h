@@ -3,20 +3,20 @@
 #include <thread>
 #include "Logic.h"
 
-class Listener
+class Receiver
 {
 public:
 
 	void Startup();
 	void Shutdown();
 
-	static Listener& getInstance();
+	static Receiver& getInstance();
 
 private:
 	
 	Logic& m_Logic = Logic::getInstance();
 
-	Listener();
+	Receiver();
 	void Listen();
 
 	std::thread* m_ListeningThread = nullptr;

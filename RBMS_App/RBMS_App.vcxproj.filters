@@ -18,13 +18,13 @@
     <ClInclude Include="pch.h">
       <Filter>Header Files</Filter>
     </ClInclude>
+    <ClInclude Include="Logic.h">
+      <Filter>Header Files</Filter>
+    </ClInclude>
     <ClInclude Include="Sender.h">
       <Filter>Header Files</Filter>
     </ClInclude>
-    <ClInclude Include="Listener.h">
-      <Filter>Header Files</Filter>
-    </ClInclude>
-    <ClInclude Include="Logic.h">
+    <ClInclude Include="Receiver.h">
       <Filter>Header Files</Filter>
     </ClInclude>
   </ItemGroup>
@@ -38,10 +38,10 @@
     <ClCompile Include="Sender.cpp">
       <Filter>Source Files</Filter>
     </ClCompile>
-    <ClCompile Include="Listener.cpp">
+    <ClCompile Include="Logic.cpp">
       <Filter>Source Files</Filter>
     </ClCompile>
-    <ClCompile Include="Logic.cpp">
+    <ClCompile Include="Receiver.cpp">
       <Filter>Source Files</Filter>
     </ClCompile>
   </ItemGroup>

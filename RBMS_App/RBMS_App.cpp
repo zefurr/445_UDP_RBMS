@@ -8,17 +8,17 @@
 #include <mutex>
 #include <condition_variable>
 #include "Sender.h"
-#include "Listener.h"
+#include "Receiver.h"
 
 int main() {
 	using namespace std;
 
 	Logic& logic = Logic::getInstance();
 	Sender& sender = Sender::getInstance();
-	Listener& listener = Listener::getInstance();
+	Receiver& receiver = Receiver::getInstance();
 	logic.Startup(); // Start logic first, it's pretty harmless on it's own
-	sender.Startup(); // Start sender before listener, otherwise we might get a message we can't reply to
-	listener.Startup(); // Start listener third, if we get a message we may need logic/sender
+	sender.Startup(); // Start sender before receiver, otherwise we might get a message we can't reply to
+	receiver.Startup(); // Start receiver third, if we get a message we may need logic and sender
 
 	int input = '\0';
 	while (input != -1) {
@@ -28,10 +28,10 @@ int main() {
 		logic.HandleMessage(input);
 	}
 	// Think about the order of shutting these down
-	// If we send a message but expect a reply, we should keep the listener open until sender thread terminates
+	// If we send a message but expect a reply, we should keep the receiver open until sender thread terminates
 	// If we receive a message and need to reply, we should keep the sender open until we do
 	// Logic will be the one issuing these instructions, so where does it land?
-	listener.Shutdown();
+	receiver.Shutdown();
 	sender.Shutdown();
 	logic.Shutdown();
 
