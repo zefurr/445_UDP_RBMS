@@ -1,5 +1,6 @@
 #include "pch.h"
 #include "ServerSession.h" // contains stdio.h, thread, vector, mutex
+#include "Message.h"
 #include <iostream>
 #include <iterator>
 #include <sstream>
@@ -12,46 +13,6 @@ ServerSession& ServerSession::getInstance()
 	return _instance;
 }
 
-ServerSession::ServerSession()
-{
-	// Initialize variables
-	slen = sizeof(si_other);
-	FD_ZERO(&fdset); // for use with select()
-	timeLimit.tv_sec = TIMEOUT_SECONDS;
-	timeLimit.tv_usec = TIMEOUT_uSECONDS;
-	RegistrationMode = false;
-	readers = 0; // keep track of threads reading the participants file
-
-	//Initialize winsock
-	printf("\nInitialising Winsock...");
-	if (WSAStartup(MAKEWORD(2, 2), &wsa) != 0)
-	{
-		printf("Failed. Error Code : %d\n", WSAGetLastError());
-		exit(EXIT_FAILURE);
-	}
-
-	printf("Initialized.\n");
-	//Create a socket
-	if ((s = socket(AF_INET, SOCK_DGRAM, 0)) == INVALID_SOCKET)
-	{
-		printf("Could not create socket : %d\n", WSAGetLastError());
-	}
-
-	printf("Socket created.\n");
-
-	//Prepare the sockaddr_in structure
-	server.sin_family = AF_INET;
-	server.sin_addr.s_addr = INADDR_ANY;
-	server.sin_port = htons(PORT);
-
-	//Bind (use ::bind when using namespace std)
-	if (bind(s, (struct sockaddr *)&server, sizeof(server)) == SOCKET_ERROR)
-	{
-		printf("Bind failed with error code : %d\n", WSAGetLastError());
-		exit(EXIT_FAILURE);
-	}
-	puts("Bind done\n");
-}
 
 void ServerSession::AddParticipant(sockaddr_in si, std::vector<char> data)
 {
@@ -60,7 +21,7 @@ void ServerSession::AddParticipant(sockaddr_in si, std::vector<char> data)
 	// Add them if they are not
 
 	using namespace std;
-		
+
 	string client_addr;
 	stringstream ss;
 	ss << inet_ntoa(si.sin_addr) << ":" << ntohs(si.sin_port);
@@ -68,13 +29,13 @@ void ServerSession::AddParticipant(sockaddr_in si, std::vector<char> data)
 
 	cout << "Received packet from " << client_addr << endl;
 	copy(data.begin(), data.end(), ostream_iterator<char>(cout));
-	
+
 	// Address the third readers writers problem:
 	// Any number of readers may access
 	// Only one writer may access, no one may read while writing occurs
 	// Once a writer requests access, allow existing readers to finish
 	// Do not allow new readers until writer has finished
-	
+
 	//TBD alternative locking tools, maybe worth looking into later
 	//lock_guard<mutex> lock(orderMutex);
 	//std::lock_guard<std::mutex> lock(orderMutex);
@@ -87,7 +48,7 @@ void ServerSession::AddParticipant(sockaddr_in si, std::vector<char> data)
 	readers++;
 	orderMutex.unlock();		// We have been served
 	readersMutex.unlock();		// We are finished manipulating the readers count
-	
+
 	// Read the participant list
 	bool alreadyExists = false;
 	ifstream ifs("Participants.txt");
@@ -125,7 +86,8 @@ void ServerSession::AddParticipant(sockaddr_in si, std::vector<char> data)
 		ofstream ofs("Participants.txt", ios::app);
 		// using ios::app places the output at the end of the txt file
 		if (ofs.is_open())
-		{			
+		{
+			m_participants.push_back(client_addr);
 			ofs << client_addr << endl;
 			ofs.close();
 			//ofs.write(client_addr.c_str(), sizeof(char)*client_addr.size()); // no newline
@@ -133,6 +95,47 @@ void ServerSession::AddParticipant(sockaddr_in si, std::vector<char> data)
 
 		exclusiveMutex.unlock();
 	}
+}
+
+ServerSession::ServerSession()
+{
+	// Initialize variables
+	slen = sizeof(si_other);
+	FD_ZERO(&fdset); // for use with select()
+	timeLimit.tv_sec = TIMEOUT_SECONDS;
+	timeLimit.tv_usec = TIMEOUT_uSECONDS;
+	RegistrationMode = false;
+	readers = 0; // keep track of threads reading the participants file
+
+	//Initialize winsock
+	printf("\nInitialising Winsock...");
+	if (WSAStartup(MAKEWORD(2, 2), &wsa) != 0) // use Winsock 2.2
+	{
+		printf("Failed. Error Code : %d\n", WSAGetLastError());
+		exit(EXIT_FAILURE);
+	}
+
+	printf("Initialized.\n");
+	//Create a socket
+	if ((s = socket(AF_INET, SOCK_DGRAM, 0)) == INVALID_SOCKET)
+	{
+		printf("Could not create socket : %d\n", WSAGetLastError());
+	}
+
+	printf("Socket created.\n");
+
+	//Prepare the sockaddr_in structure
+	server.sin_family = AF_INET; // IPv4
+	server.sin_addr.s_addr = INADDR_ANY;
+	server.sin_port = htons(PORT);
+
+	//Bind (use ::bind when using namespace std)
+	if (bind(s, (struct sockaddr *)&server, sizeof(server)) == SOCKET_ERROR)
+	{
+		printf("Bind failed with error code : %d\n", WSAGetLastError());
+		exit(EXIT_FAILURE);
+	}
+	puts("Bind done\n");
 }
 
 void ServerSession::Register()
@@ -218,6 +221,7 @@ void ServerSession::StopRegistration()
 		// Maybe keep track of them inside m_Threads and then do if t.joinable { t.join }
 		// This would mean not detaching them
 
+	SessionStartMsg ssm(MSG_START, m_participants);
 
 	// For each participant in the list, send the participant the full list
 		// TBD

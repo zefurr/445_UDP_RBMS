@@ -35,6 +35,7 @@ private:
 	fd_set fdset;
 	struct timeval timeLimit;
 	std::vector<std::thread*> m_Threads;
+	std::vector<std::string> m_participants;
 	bool RegistrationMode;
 
 	// Mutexes related to registering participants
