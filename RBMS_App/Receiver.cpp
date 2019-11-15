@@ -31,21 +31,7 @@ Receiver::Receiver()
 	{
 		printf("Could not create socket : %d\n", WSAGetLastError());
 	}
-
 	//printf("Socket created.\n");
-
-	//Prepare the sockaddr_in structure
-	m_Receiver_Addr.sin_family = AF_INET; // IPv4
-	m_Receiver_Addr.sin_addr.s_addr = INADDR_ANY;
-	m_Receiver_Addr.sin_port = htons(PORT);
-
-	//Bind (use ::bind when using namespace std)
-	if (::bind(m_sock, (struct sockaddr *)&m_Receiver_Addr, sizeof(m_Receiver_Addr)) == SOCKET_ERROR)
-	{
-		printf("Bind failed with error code : %d\n", WSAGetLastError());
-		exit(EXIT_FAILURE);
-	}
-	//puts("Bind done\n");
 }
 
 // Runs in a thread to wait for incoming messages
@@ -74,8 +60,22 @@ void Receiver::Listen() {
 	}
 }
 
-void Receiver::Startup()
+void Receiver::Startup(int port_offset)
 {
+	//Prepare the sockaddr_in structure
+	m_Receiver_Addr.sin_family = AF_INET; // IPv4
+	m_Receiver_Addr.sin_addr.s_addr = INADDR_ANY;
+	m_Receiver_Addr.sin_port = htons(m_Port + port_offset);
+	printf("Bind failed with error code : %d\n", m_Port + port_offset);
+
+	//Bind (use ::bind when using namespace std)
+	if (::bind(m_sock, (struct sockaddr *)&m_Receiver_Addr, sizeof(m_Receiver_Addr)) == SOCKET_ERROR)
+	{
+		printf("Bind failed with error code : %d\n", WSAGetLastError());
+		exit(EXIT_FAILURE);
+	}
+	//puts("Bind done\n");
+
 	m_Alive = true;
 
 	m_ListeningThread = new thread{ &Receiver::Listen, this };

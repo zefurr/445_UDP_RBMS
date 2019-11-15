@@ -4,13 +4,13 @@
 #include <thread>
 #include "Logic.h"
 
-#define PORT 8888	// The port on which to listen for incoming data
+//#define PORT 8888	// The port on which to listen for incoming data
 
 class Receiver
 {
 public:
 
-	void Startup();
+	void Startup(int port_offset = 0);
 	void Shutdown();
 
 	static Receiver& getInstance();
@@ -24,6 +24,8 @@ private:
 	int m_sockaddr_len;
 	WSADATA m_WSA;
 	char m_buffer[BUF_LEN];
+
+	int m_Port = 8887;
 
 
 	Receiver();

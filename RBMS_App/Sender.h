@@ -11,7 +11,7 @@ class Sender
 {
 public:
 
-	void Startup();
+	void Startup(int port_offset = 0);
 	void Shutdown();
 	void SendUDPMessage(BaseMessage); // Producer function
 
@@ -27,6 +27,8 @@ private:
 	int m_sockaddr_len;
 	WSADATA m_WSA;
 	char m_buffer[BUF_LEN];
+	int m_Port = 8888;
+	int m_PortOffset = 0;
 
 	std::thread* m_ProcessingThread = nullptr;
 	bool m_Alive;

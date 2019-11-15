@@ -57,8 +57,8 @@ int main() {
 	Sender& sender = Sender::getInstance();
 	Receiver& receiver = Receiver::getInstance();
 	logic.Startup(mode); // Start logic first, it's pretty harmless on it's own
-	sender.Startup(); // Start sender before receiver, otherwise we might get a message we can't reply to
-	receiver.Startup(); // Start receiver third, if we get a message we may need logic and sender
+	sender.Startup(mode); // Start sender before receiver, otherwise we might get a message we can't reply to
+	receiver.Startup(mode); // Start receiver third, if we get a message we may need logic and sender
 
 	if (mode == 0) { // Client interface
 		while (input != -1) {

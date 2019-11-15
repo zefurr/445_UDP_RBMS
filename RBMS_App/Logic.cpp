@@ -1,6 +1,9 @@
 #include "pch.h"
 #include "Logic.h"
 
+#include <iostream> // for debugging
+#include <string>
+
 using namespace std;
 
 Logic& Logic::getInstance() {
@@ -74,12 +77,12 @@ void Logic::HandleMessage(std::vector<char> message, sockaddr_in src_addr)
 		else { // Client logic (m_Mode == 0 ) 
 			if (msg_type == SESH_START) { // Session has begun, server is providing participant list
 				// Send an acknowledgement
-				printf("RECEIVED MESSAGE: %s", msg_type);
-				printf("I SHOULD REPLY!");
+				cout << "RECEIVED MESSAGE: " << msg_type << endl;
+				cout << "I SHOULD REPLY!" << endl;
 			}
 			else if (msg_type == ACK_REG) { // Server has received your registration request
 				// Wait for confirmation of the session start
-				printf("RECEIVED MESSAGE: %s", msg_type);
+				cout << "RECEIVED MESSAGE: " << msg_type << endl;
 			}
 			else if (msg_type == INVITE) { // Server is forwarding a meeting invitation
 				// Check agenda

@@ -67,7 +67,8 @@ void Sender::ProcessMessages() {
 		for (BaseMessage msg : copy)
 		{
 			strcpy_s(m_buffer, msg.toCharVector().data());
-			m_Dest_Addr.sin_port = msg.m_Destination.sin_port;
+			//m_Dest_Addr.sin_port = msg.m_Destination.sin_port;
+			m_Dest_Addr.sin_port = htons(m_Port - m_PortOffset);
 			m_Dest_Addr.sin_addr = msg.m_Destination.sin_addr;
 
 			//send the message
@@ -86,7 +87,7 @@ void Sender::ProcessMessages() {
 			vector<char> raw_vector = msg.toCharVector();
 			string msg_content(raw_vector.begin(), raw_vector.end());
 			msg_content.append(dest_addr);
-			cout << "Your message: " << msg_content << endl;
+			cout << "Message sent: " << msg_content << endl;
 			// FOR DEBUG OUTPUT - END
 		}
 	}
@@ -107,8 +108,9 @@ void Sender::SendUDPMessage(BaseMessage message)
 	}
 }
 
-void Sender::Startup()
+void Sender::Startup(int port_offset)
 {
+	m_PortOffset = port_offset;
 	m_Alive = true;
 	m_ProcessingThread = new thread{ &Sender::ProcessMessages, this };
 }
