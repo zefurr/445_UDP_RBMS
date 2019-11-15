@@ -15,11 +15,16 @@ void Logic::HandleMessage(int i)
 			// obtain a writing lock for writing to the message queue
 			lock_guard<mutex> lock(m_Mutex);
 			//add message to queue
-			m_Messages.push_back(i);
+			m_IntMsgs.push_back(i);
 		}
 		// notify the ProcessMessage thread of new messages
 		m_Cond_NotEmpty.notify_one();
 	}
+}
+
+void Logic::HandleMessage(std::vector<char> message, sockaddr_in src_addr)
+{
+	
 }
 
 Logic::Logic()
@@ -32,16 +37,16 @@ void Logic::MainLogic() {
 		unique_lock<mutex> lock(m_Mutex);
 		// wait for notify from SendMessage() function
 		m_Cond_NotEmpty.wait(lock,
-			[&a = m_Alive, &mList = m_Messages]
+			[&a = m_Alive, &mList = m_IntMsgs]
 		{ return (!a || !mList.empty()); });
 		// To prevent spurious wake up make sure either 
 		// we are not alive OR message list isnt empty
 
 	// copy the messages to a local var
-		vector<int> copy{ m_Messages };
+		vector<int> copy{ m_IntMsgs };
 
 		// clear the message list
-		m_Messages.clear();
+		m_IntMsgs.clear();
 
 		// release lock
 		lock.unlock();

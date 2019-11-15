@@ -10,6 +10,8 @@ int main()
 {
 	using namespace std;
 	string cmd;
+	cout << "DO NOT RUN THIS APPLICATION\n";
+	cout << "RUN RBMS_App INSTEAD (one instance per server/client\n\n";
 
 	cout << "Meeting Scheduler Client\n\n";
 

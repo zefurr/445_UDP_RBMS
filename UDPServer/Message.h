@@ -15,9 +15,8 @@
 #include "pch.h"
 #include <vector>
 
-
 // definitions for messages received from clients TEST
-#define MSG_REG "REGISTERbutITisREALLYlongINSTEADdoesTHISchangeANYTHING"
+#define MSG_REG "REGISTER"
 
 // definitions for messaged send by the server
 #define MSG_START "START"
@@ -26,7 +25,6 @@
 // Messages which carry no data (Registration, Acknowledgements)
 struct BaseMessage
 {
-
 	std::string msgType;
 
 	BaseMessage();

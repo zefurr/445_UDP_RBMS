@@ -12,6 +12,8 @@ int main()
 	string cmd;
 
 	// Initial user menu // TBD any other initial options?
+	cout << "DO NOT RUN THIS APPLICATION\n";
+	cout << "RUN RBMS_App INSTEAD\n\n";
 	cout << "Room Booking and Meeting Scheduler Server\n\n";
 
 	cout << "Choose an option:\n";

@@ -3,7 +3,7 @@
 
 BaseMessage::BaseMessage()
 {
-	msgType = "Garbage";
+	msgType = "Uninitialized Message!";
 }
 
 BaseMessage::BaseMessage(std::string type)

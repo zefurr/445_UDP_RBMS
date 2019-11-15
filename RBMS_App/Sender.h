@@ -1,5 +1,6 @@
 #pragma once
 
+#include "shared_winsock.h"
 #include <vector>
 #include <thread>
 #include <mutex>
