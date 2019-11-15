@@ -3,17 +3,17 @@
 
 BaseMessage::BaseMessage()
 {
-	msgType = "Garbage";
+	m_Type = "Uninitialized Message!";
 }
 
 BaseMessage::BaseMessage(std::string type)
 {
-	msgType = type;
+	m_Type = type;
 }
 
 SessionStartMsg::SessionStartMsg(std::string type, std::vector<std::string> participantList)
 {
-	msgType = type;
+	m_Type = type;
 
 	participants = participantList;
 }

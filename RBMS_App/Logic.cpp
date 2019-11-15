@@ -1,0 +1,170 @@
+#include "pch.h"
+#include "Logic.h"
+
+#include <iostream> // for debugging
+#include <string>
+
+using namespace std;
+
+Logic& Logic::getInstance() {
+	static Logic _instance;
+	return _instance;
+}
+
+void Logic::HandleMessage(std::vector<char> message, sockaddr_in src_addr)
+{
+	// Send the message to the logger
+		// Better as string or char vector? Does it even matter?
+
+	string msg_content(message.begin(), message.end());
+	int first_delim = msg_content.find_first_of('|');
+	
+	if (first_delim == string::npos) {
+		// Invalid message format.
+	}
+	else {
+		string msg_type = msg_content.substr(0, first_delim);
+
+		if (m_Mode == 1) // Server logic
+		{
+			if (msg_type == REGISTER) { // A client wishes to register for this session
+				// Add them to the participants list in memory
+
+				// Reply with an acknowledgement of their request
+				BaseMessage ack_reg(ACK_REG, src_addr);
+				m_Sender.SendUDPMessage(ack_reg);
+			}
+			else if (msg_type == REQ_MEET) { // A client wishes to create a meeting
+				// See if there is a room available at the requested time
+					// Room is available
+						// Build meeting object
+						// Start sending invitations
+			}
+			else if (msg_type == ACCEPT) { // A client is accepting a meeting invitation
+				// If the meeting exists
+					// If the client is invited to that meeting
+						// Set the flag for that client to (ACCEPTED)
+						// Increment the number of confirmations for that meeting
+			}
+			else if (msg_type == REJECT) { // A client is rejecting a meeting invitation
+				// If the meeting exists
+					// If the client is invited to that meeting
+						// Set the flag for that client to (REJECTED)
+			}
+			else if (msg_type == WITHDRAW) { // A client is withdrawing attendance from a meeting
+				// If the meeting exists
+					// If the client is invited to that meeting
+						// Set the flag for that client to (WITHDRAW)
+						// Decrement the number of confirmations for that meeting
+			}
+			else if (msg_type == ADD) { // A client is joining a previously rejected meeting
+				// If the meeting exists
+					// If the client is invited to that meeting
+						// Set the flag for that client to (ACCEPT)
+						// Increment the number of confirmations for that meeting
+						// If the room for the meeting has previously changed
+							// Send a ROOM_CHANGE to the client
+				// Else it doesn't exist
+					// Send a CANCEL to the client
+			}
+			else if (msg_type == SESH_START) { // User at server terminal has ended the registration period
+				//  Provide all participants with participant list
+			}
+			else { // Unsupported message (either invalid or meant for client logic)
+
+			}
+		}
+		else { // Client logic (m_Mode == 0 ) 
+			if (msg_type == SESH_START) { // Session has begun, server is providing participant list
+				// Send an acknowledgement
+				cout << "RECEIVED MESSAGE: " << msg_type << endl;
+				cout << "I SHOULD REPLY!" << endl;
+			}
+			else if (msg_type == ACK_REG) { // Server has received your registration request
+				// Wait for confirmation of the session start
+				cout << "RECEIVED MESSAGE: " << msg_type << endl;
+			}
+			else if (msg_type == INVITE) { // Server is forwarding a meeting invitation
+				// Check agenda
+
+				// If available reply with ACCEPT
+
+				// Else unavailable reply with REJECT
+			}
+			else if (msg_type == CANCEL) { // A meeting involving this client has been cancelled
+				// Clear that meeting from the agenda (implicitly making this client available at that meeting time)
+			}
+			else if (msg_type == ROOM_CHANGE) { // A meeting this client is attending has changed room
+				// If that meeting exists in our agenda
+					// Update the room
+			}
+			else if (msg_type == REGISTER) { // This client wishes to register with the server
+				// TBD this is silly: we made a message in RBMS_App
+				// TBD - then converted it to vector + sockaddr
+				// TBD - then converted the vector to string
+				// TBD - now we're making a message from string + sockaddr
+				// TBD - should just keep it as a message from start to finish
+				BaseMessage reg_client(msg_type, src_addr); // src_addr somewhat misleading when we get client commands
+				m_Sender.SendUDPMessage(reg_client);
+			}
+			else { // Unsupported message (either invalid or meant for server logic)
+			}
+		}
+	}
+}
+
+Logic::Logic()
+	: m_Mode(0) // Assume client logic if not specified
+{
+}
+
+void Logic::MainLogic() {
+	//while (m_Alive) {
+	//	// aquire a lock on the queue
+	//	unique_lock<mutex> lock(m_Mutex);
+	//	// wait for notify from SendUDPMessage() function
+	//	m_Cond_NotEmpty.wait(lock,
+	//		[&a = m_Alive, &mList = m_IntMsgs]
+	//	{ return (!a || !mList.empty()); });
+	//	// To prevent spurious wake up make sure either 
+	//	// we are not alive OR message list isnt empty
+
+	//// copy the messages to a local var
+	//	vector<int> copy{ m_IntMsgs };
+
+	//	// clear the message list
+	//	m_IntMsgs.clear();
+
+	//	// release lock
+	//	lock.unlock();
+
+	//	// send messages via the socket
+	//	for (int i : copy)
+	//	{
+	//		// TBD Read the message, do a switch case based on the type of message
+	//		// TBD This varies greatly on whether we are a client or a server
+	//		m_Sender.SendUDPMessage(i);
+	//	}
+	//}
+}
+
+void Logic::Startup(int mode)
+{
+	m_Mode = mode; // 0 = Client, 1 = Server
+	m_Alive = true;
+	m_LogicThread = new thread{ &Logic::MainLogic, this };
+}
+
+void Logic::Shutdown()
+{
+	m_Alive = false;
+	m_Cond_NotEmpty.notify_one();
+
+	if (m_LogicThread->joinable()) {
+		m_LogicThread->join();
+	}
+	delete m_LogicThread; // consider checking if (m_Thread != nullptr)
+
+	// Close the socket
+}
+
