@@ -221,7 +221,7 @@ void ServerSession::StopRegistration()
 		// Maybe keep track of them inside m_Threads and then do if t.joinable { t.join }
 		// This would mean not detaching them
 
-	SessionStartMsg ssm(MSG_START, m_participants);
+	//SessionStartMsg ssm(MSG_START, m_participants);
 
 	// For each participant in the list, send the participant the full list
 		// TBD

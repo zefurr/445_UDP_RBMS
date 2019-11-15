@@ -6,23 +6,16 @@
 #include <mutex>
 #include <condition_variable>
 #include "Sender.h"
-
-// definitions for messages received from clients
-#define MSG_REG "REGISTER"
-
-// definitions for messaged send by the server
-#define MSG_START "START"
-#define ACK_REG "ACK_REGISTER"
+#include "Message.h"
 
 class Logic
 {
 public:
 
 	static Logic& getInstance();
-	void Startup();
+	void Startup(int);
 	void Shutdown();
 	
-	void HandleMessage(int);
 	void HandleMessage(std::vector<char>, sockaddr_in);
 
 private:
@@ -30,6 +23,7 @@ private:
 	// Basic elements START
 	Logic();
 	std::thread* m_LogicThread = nullptr;
+	int m_Mode;
 	bool m_Alive;
 	void MainLogic();
 	// Basic elements END

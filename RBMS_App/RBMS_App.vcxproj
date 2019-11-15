@@ -151,7 +151,7 @@
     </Link>
   </ItemDefinitionGroup>
   <ItemGroup>
-    <ClInclude Include="..\UDPServer\Message.h" />
+    <ClInclude Include="Message.h" />
     <ClInclude Include="Receiver.h" />
     <ClInclude Include="Logic.h" />
     <ClInclude Include="pch.h" />
@@ -159,7 +159,7 @@
     <ClInclude Include="shared_winsock.h" />
   </ItemGroup>
   <ItemGroup>
-    <ClCompile Include="..\UDPServer\Message.cpp" />
+    <ClCompile Include="Message.cpp" />
     <ClCompile Include="Receiver.cpp" />
     <ClCompile Include="Logic.cpp" />
     <ClCompile Include="pch.cpp">
