@@ -54,9 +54,9 @@ void Receiver::Listen() {
 		}
 
 		// copy the buffer content into a vector so we can pass it by value, sockaddr_in is naturally by value
-		std::vector<char> message(&m_buffer[0], &m_buffer[BUF_LEN]);
+		std::vector<char> content(&m_buffer[0], &m_buffer[BUF_LEN]);
 		// Pass the message to the logic, it will evaluate and process the message
-		m_Logic.HandleMessage(message, m_Src_Addr);
+		m_Logic.HandleMessage(content, m_Src_Addr);
 	}
 }
 
@@ -66,7 +66,7 @@ void Receiver::Startup(int port_offset)
 	m_Receiver_Addr.sin_family = AF_INET; // IPv4
 	m_Receiver_Addr.sin_addr.s_addr = INADDR_ANY;
 	m_Receiver_Addr.sin_port = htons(m_Port + port_offset);
-	printf("Bind failed with error code : %d\n", m_Port + port_offset);
+	//printf("Bind failed with error code : %d\n", m_Port + port_offset);
 
 	//Bind (use ::bind when using namespace std)
 	if (::bind(m_sock, (struct sockaddr *)&m_Receiver_Addr, sizeof(m_Receiver_Addr)) == SOCKET_ERROR)

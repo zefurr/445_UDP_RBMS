@@ -1,14 +1,65 @@
 #include "pch.h"
 #include "Logic.h"
 
-#include <iostream> // for debugging
-#include <string>
+#include <iostream> // for debugging 
 
 using namespace std;
+//declare extern vector
+vector<Participant> participantlist;
+vector<Meeting> meetings;
+//vector<string> participantlist;
+//vector<string> meetings;
+vector<int> room1;
+vector<int> room2;
 
-Logic& Logic::getInstance() {
+//intialize counters at 0
+int requestCounter = 0;
+
+Logic& Logic::getInstance() 
+{
 	static Logic _instance;
 	return _instance;
+}
+
+void Logic::AddParticipant(sockaddr_in si) 
+{
+	string client_addr;
+	stringstream ss;
+	ss << inet_ntoa(si.sin_addr) << ":" << ntohs(si.sin_port);
+	client_addr = ss.str();
+
+	Participant p(client_addr, si);
+
+	/*if (find(participantlist.begin(), participantlist.end(), p) != participantlist.end()) 
+	{
+		cout << "Client is already registered !" << endl;
+	}
+	else 
+	{*/
+		participantlist.push_back(p);
+	//	cout << "Client with name " + p.getClientName() + " and with address " + p.getClientAddr() + " successfully registered." << endl;
+	//}
+}
+
+string Logic::SerializeParticipantList(vector<string> vs)
+{
+	string serialized = "";
+
+	for (int i = 0; i < vs.size(); i++) 
+	{
+		while (vs[i] != vs.back())
+		{
+			serialized.append(vs[i] + ",");
+		}
+			
+		serialized.append(vs[i]);
+	}
+
+	return serialized;
+}
+
+void Logic::DisplayParticipantList() {
+
 }
 
 void Logic::HandleMessage(std::vector<char> message, sockaddr_in src_addr)
@@ -16,23 +67,26 @@ void Logic::HandleMessage(std::vector<char> message, sockaddr_in src_addr)
 	// Send the message to the logger
 		// Better as string or char vector? Does it even matter?
 
-	string msg_content(message.begin(), message.end());
-	int first_delim = msg_content.find_first_of('|');
+	string raw_content(message.begin(), message.end());
+	int first_delim = raw_content.find_first_of('|');
+	int last_delim = raw_content.find_last_of('|');
+
+	string msg_content(message.begin(), message.begin() + last_delim + 1);
 	
 	if (first_delim == string::npos) {
 		// Invalid message format.
 	}
 	else {
-		string msg_type = msg_content.substr(0, first_delim);
-
+		string msg_type = raw_content.substr(0, first_delim);
+	
 		if (m_Mode == 1) // Server logic
 		{
 			if (msg_type == REGISTER) { // A client wishes to register for this session
 				// Add them to the participants list in memory
-
+				Logic::AddParticipant(src_addr);
 				// Reply with an acknowledgement of their request
 				BaseMessage ack_reg(ACK_REG, src_addr);
-				m_Sender.SendUDPMessage(ack_reg);
+				m_Sender.SendUDPMessage(ack_reg.toCharVector(), src_addr);
 			}
 			else if (msg_type == REQ_MEET) { // A client wishes to create a meeting
 				// See if there is a room available at the requested time
@@ -69,6 +123,14 @@ void Logic::HandleMessage(std::vector<char> message, sockaddr_in src_addr)
 			}
 			else if (msg_type == SESH_START) { // User at server terminal has ended the registration period
 				//  Provide all participants with participant list
+				//string serialized = SerializeParticipantList(participantlist);
+
+				for (int i = 0; i < participantlist.size(); i++) {
+					SessionStartMsg startSession(msg_type, participantlist, participantlist[i].getClientSI());
+					/*cout << "TYPE " << startSession.m_Type << endl;
+					cout << "NAME " << startSession.m_Participant << endl;*/
+					m_Sender.SendUDPMessage(startSession.toCharVector(), startSession.m_Destination);
+				}	
 			}
 			else { // Unsupported message (either invalid or meant for client logic)
 
@@ -79,6 +141,23 @@ void Logic::HandleMessage(std::vector<char> message, sockaddr_in src_addr)
 				// Send an acknowledgement
 				cout << "RECEIVED MESSAGE: " << msg_type << endl;
 				cout << "I SHOULD REPLY!" << endl;
+				cout << "Participant list: " << msg_content << endl;
+
+				// Find all the participants
+				for (int i = first_delim + 1; i < last_delim; i++) {
+					if (msg_content[i] == '|') {
+						break; // We reached the end of the participant list
+					}
+					for (int j = i; j < last_delim; j++) {
+						// until you see ,
+						if (msg_content[j] == ',') {
+							// We've reached the next participant
+							//String name = msg_content(i, j);
+							//addParticipant(name);
+							i = j; // Place i at the comma (it will get auto incremented past the comma)
+						}
+					}
+				}
 			}
 			else if (msg_type == ACK_REG) { // Server has received your registration request
 				// Wait for confirmation of the session start
@@ -105,7 +184,7 @@ void Logic::HandleMessage(std::vector<char> message, sockaddr_in src_addr)
 				// TBD - now we're making a message from string + sockaddr
 				// TBD - should just keep it as a message from start to finish
 				BaseMessage reg_client(msg_type, src_addr); // src_addr somewhat misleading when we get client commands
-				m_Sender.SendUDPMessage(reg_client);
+				m_Sender.SendUDPMessage(reg_client.toCharVector(), src_addr);
 			}
 			else { // Unsupported message (either invalid or meant for server logic)
 			}
