@@ -55,7 +55,7 @@ void Sender::ProcessMessages() {
 			// we are not alive OR message list isnt empty
 
 		// copy the message to a local var copy
-		vector<BaseMessage> copy{ m_Messages };
+		vector<Message> copy{ m_Messages };
 
 		// clear the message list
 		m_Messages.clear();
@@ -64,12 +64,13 @@ void Sender::ProcessMessages() {
 		lock.unlock();
 
 		// send messages via the socket
-		for (BaseMessage msg : copy)
+		for (Message msg : copy)
 		{
-			strcpy_s(m_buffer, msg.toCharVector().data());
+			//strcpy_s(m_buffer, msg.toCharVector().data());
+			strcpy_s(m_buffer, msg.content.data());
 			//m_Dest_Addr.sin_port = msg.m_Destination.sin_port;
 			m_Dest_Addr.sin_port = htons(m_Port - m_PortOffset);
-			m_Dest_Addr.sin_addr = msg.m_Destination.sin_addr;
+			m_Dest_Addr.sin_addr = msg.dest.sin_addr;
 
 			//send the message
 			if (sendto(m_sock, m_buffer, strlen(m_buffer), 0, (struct sockaddr *) &m_Dest_Addr, m_sockaddr_len) == SOCKET_ERROR)
@@ -81,10 +82,10 @@ void Sender::ProcessMessages() {
 			// FOR DEBUG OUTPUT - START
 			string dest_addr;
 			stringstream ss;
-			ss << inet_ntoa(msg.m_Destination.sin_addr) << ":" << ntohs(msg.m_Destination.sin_port);
+			ss << inet_ntoa(msg.dest.sin_addr) << ":" << ntohs(msg.dest.sin_port);
 			dest_addr = ss.str();
 
-			vector<char> raw_vector = msg.toCharVector();
+			vector<char> raw_vector = msg.content;
 			string msg_content(raw_vector.begin(), raw_vector.end());
 			msg_content.append("|" + dest_addr);
 			cout << "\nMessage sent: " << msg_content << endl;
@@ -94,14 +95,15 @@ void Sender::ProcessMessages() {
 }
 
 // To be called by external entities wishing to send a message
-void Sender::SendUDPMessage(BaseMessage message)
+void Sender::SendUDPMessage(vector<char> message, sockaddr_in dest)
 {
 	if (m_Alive) {
 		{
 			// obtain a writing lock for writing to the message queue
 			lock_guard<mutex> lock(m_Mutex);
 			//add message to queue
-			m_Messages.push_back(message);
+			Message m{message, dest};
+			m_Messages.push_back(m);
 		}
 		// notify the ProcessMessage thread of new messages
 		m_Cond_NotEmpty.notify_one();

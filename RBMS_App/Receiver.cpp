@@ -54,9 +54,9 @@ void Receiver::Listen() {
 		}
 
 		// copy the buffer content into a vector so we can pass it by value, sockaddr_in is naturally by value
-		std::vector<char> message(&m_buffer[0], &m_buffer[BUF_LEN]);
+		std::vector<char> content(&m_buffer[0], &m_buffer[BUF_LEN]);
 		// Pass the message to the logic, it will evaluate and process the message
-		m_Logic.HandleMessage(message, m_Src_Addr);
+		m_Logic.HandleMessage(content, m_Src_Addr);
 	}
 }
 

@@ -5,7 +5,16 @@
 #include <thread>
 #include <mutex>
 #include <condition_variable>
-#include "Message.h"
+
+struct Message {
+	std::vector<char> content;
+	sockaddr_in dest;
+};
+
+struct foo {
+	int a;
+	int b;
+};
 
 class Sender
 {
@@ -13,7 +22,8 @@ public:
 
 	void Startup(int port_offset = 0);
 	void Shutdown();
-	void SendUDPMessage(BaseMessage); // Producer function
+	
+	void SendUDPMessage(std::vector<char>, sockaddr_in); // Producer function
 
 	static Sender& getInstance();
 
@@ -36,7 +46,7 @@ private:
 	// Basic elements END
 
 	// Consumer elements START
-	std::vector<BaseMessage> m_Messages; //
+	std::vector<Message> m_Messages; //
 	std::mutex m_Mutex;
 	std::condition_variable m_Cond_NotEmpty;
 	// Consumer elements END

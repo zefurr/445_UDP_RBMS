@@ -36,10 +36,10 @@ void Logic::AddParticipant(sockaddr_in si)
 		cout << "Client is already registered !" << endl;
 	}
 	else 
-	{
+	{*/
 		participantlist.push_back(p);
-		cout << "Client with name " + p.getClientName() + " and with address " + p.getClientAddr() + " successfully registered." << endl;
-	}*/
+	//	cout << "Client with name " + p.getClientName() + " and with address " + p.getClientAddr() + " successfully registered." << endl;
+	//}
 }
 
 string Logic::SerializeParticipantList(vector<string> vs)
@@ -84,7 +84,7 @@ void Logic::HandleMessage(std::vector<char> message, sockaddr_in src_addr)
 				Logic::AddParticipant(src_addr);
 				// Reply with an acknowledgement of their request
 				BaseMessage ack_reg(ACK_REG, src_addr);
-				m_Sender.SendUDPMessage(ack_reg);
+				m_Sender.SendUDPMessage(ack_reg.toCharVector(), src_addr);
 			}
 			else if (msg_type == REQ_MEET) { // A client wishes to create a meeting
 				// See if there is a room available at the requested time
@@ -127,7 +127,7 @@ void Logic::HandleMessage(std::vector<char> message, sockaddr_in src_addr)
 					SessionStartMsg startSession(msg_type, participantlist, participantlist[i].getClientSI());
 					/*cout << "TYPE " << startSession.m_Type << endl;
 					cout << "NAME " << startSession.m_Participant << endl;*/
-					m_Sender.SendUDPMessage(startSession);
+					m_Sender.SendUDPMessage(startSession.toCharVector(), startSession.m_Destination);
 				}	
 			}
 			else { // Unsupported message (either invalid or meant for client logic)
@@ -166,7 +166,7 @@ void Logic::HandleMessage(std::vector<char> message, sockaddr_in src_addr)
 				// TBD - now we're making a message from string + sockaddr
 				// TBD - should just keep it as a message from start to finish
 				BaseMessage reg_client(msg_type, src_addr); // src_addr somewhat misleading when we get client commands
-				m_Sender.SendUDPMessage(reg_client);
+				m_Sender.SendUDPMessage(reg_client.toCharVector(), src_addr);
 			}
 			else { // Unsupported message (either invalid or meant for server logic)
 			}
