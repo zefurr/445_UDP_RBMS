@@ -23,7 +23,6 @@ Logic& Logic::getInstance()
 
 void Logic::AddParticipant(sockaddr_in si) 
 {
-
 	string client_addr;
 	stringstream ss;
 	ss << inet_ntoa(si.sin_addr) << ":" << ntohs(si.sin_port);
