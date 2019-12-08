@@ -68,14 +68,17 @@ void Logic::HandleMessage(std::vector<char> message, sockaddr_in src_addr)
 	// Send the message to the logger
 		// Better as string or char vector? Does it even matter?
 
-	string msg_content(message.begin(), message.end());
-	int first_delim = msg_content.find_first_of('|');
+	string raw_content(message.begin(), message.end());
+	int first_delim = raw_content.find_first_of('|');
+	int last_delim = raw_content.find_last_of('|');
+
+	string msg_content(message.begin(), message.begin() + last_delim + 1);
 	
 	if (first_delim == string::npos) {
 		// Invalid message format.
 	}
 	else {
-		string msg_type = msg_content.substr(0, first_delim);
+		string msg_type = raw_content.substr(0, first_delim);
 	
 		if (m_Mode == 1) // Server logic
 		{

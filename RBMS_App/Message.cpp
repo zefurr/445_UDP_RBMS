@@ -54,11 +54,12 @@ std::vector<char> SessionStartMsg::toCharVector()
 	for (int i = 0; i < m_PL.size(); i++) {
 		str.append(m_PL[i].getClientName());
 
-		if (i != m_PL.size())
+		if (i != m_PL.size() - 1)
 		{
-			str.append(", ");
+			str.append(",");
 		}
 	}
+	str.push_back('|');
 	std::cout << "STRRR: " << str << endl;
 	const vector<char> char_vector(str.begin(), str.end());
 	
