@@ -4,9 +4,24 @@
 #include <vector>
 #include <thread>
 #include <mutex>
+#include <string>
+#include <sstream> 
 #include <condition_variable>
+#include <algorithm>
 #include "Sender.h"
 #include "Message.h"
+#include "Participant.h"
+#include "Meeting.h"
+
+//init global vector holding 
+extern std::vector<Participant> participantlist;
+extern std::vector<Meeting> meetings;
+//extern std::vector<std::string> participantlist;
+//extern std::vector<std::string> meetings;
+extern std::vector<int> room1; //using int to indicate timeslots for simplicity
+extern std::vector<int> room2;
+//RQ# (incremented each for each request message)
+extern int requestCounter;
 
 class Logic
 {
@@ -17,6 +32,14 @@ public:
 	void Shutdown();
 	
 	void HandleMessage(std::vector<char>, sockaddr_in);
+
+	//add a new participant
+	static void AddParticipant(sockaddr_in);
+	std::string SerializeParticipantList(std::vector<std::string> vs);
+	//serialize participant list into a string
+	//string SerializeParticipantList(vector<string>);
+	//display participant list
+	static void DisplayParticipantList();
 
 private:
 
@@ -34,7 +57,7 @@ private:
 	// User elements start
 
 	// Consumer elements START
-	std::vector<int> m_IntMsgs; //
+	std::vector<int> m_IntMsgs;
 	std::mutex m_Mutex;
 	std::condition_variable m_Cond_NotEmpty;
 	// Consumer elements END

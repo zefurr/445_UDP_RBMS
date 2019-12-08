@@ -6,6 +6,7 @@
 #include <iostream>
 #include <thread>
 #include <mutex>
+#include <string>
 #include <condition_variable>
 #include "Sender.h"
 #include "Receiver.h"
@@ -38,6 +39,7 @@ int main() {
 	server_addr.sin_addr.S_un.S_addr = inet_addr(SERVER);
 
 	int input = '\0';
+	int temp = '\0';
 
 	cout << "ROOM BOOKING and MEETING SCHEDULER (RBMS)" << endl << endl;
 
@@ -66,14 +68,19 @@ int main() {
 			cout << "MEETING SCHEDULER (MS)" << endl << endl;
 
 			cout << "Choose an action (-1 to quit):" << endl;
-			cout << "\t1) Join booking session" << endl << endl;
+			cout << "\t1) Join booking session" << endl;
+			cout << "\t2) foo " << endl;
+			cout << "\t3) foo" << endl;
+			cout << "\t4) foo" << endl;
+			cout << "\t5) foo" << endl;
+			cout << "\t6) foo" << endl << endl;
 
 			cin >> input;
 			clear_screen();
 
 			if (input == 1) {
 				BaseMessage reg_request(REGISTER);
-				cout << "SENDING REGISTRATION REQUEST" << endl << endl;
+				cout << "Sending registration request ..." << endl << endl;
 				logic.HandleMessage(reg_request.toCharVector(), server_addr);
 
 				while (input != -1) {
@@ -82,6 +89,8 @@ int main() {
 				cin >> input;
 				clear_screen();
 				}
+			} else if (input == 2) {
+				//RequestMsg meeting_request(REQ_MEET);
 			}
 		}
 	}
@@ -96,17 +105,23 @@ int main() {
 			clear_screen();
 
 			if (input == 1) {
-				BaseMessage start_session(SESH_START);
-				logic.HandleMessage(start_session.toCharVector(), server_addr);
-
+				
 				while (input != -2) {
 					cout << "ROOM BOOKING and MEETING SCHEDULER (RBMS)" << endl << endl;
 
-					cout << "Registration mode active" << endl;
+					cout << "Registration mode activated." << endl;
 					cout << "\t(-2 to end registration)" << endl << endl;
 					cin >> input;
 					clear_screen();
 				}
+
+				cout << "Session is starting ..." << endl;
+				BaseMessage start_session(SESH_START);
+				logic.HandleMessage(start_session.toCharVector(), server_addr);
+				cout << "Sent participants list to all clients." << endl;
+				cout << "Press a key to return to main page ..." << endl << endl;
+				cin >> temp;
+				clear_screen();
 
 			}
 		}

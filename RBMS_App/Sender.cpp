@@ -4,7 +4,7 @@
 #include <mutex>
 #include <condition_variable>
 
-#include <string.h>	// Temporary for testing
+#include <string>	// Temporary for testing
 #include <sstream>	// Temporary for testing
 
 using namespace std;
@@ -54,7 +54,7 @@ void Sender::ProcessMessages() {
 			// To prevent spurious wake up make sure either 
 			// we are not alive OR message list isnt empty
 
-		// copy the message to a local var
+		// copy the message to a local var copy
 		vector<BaseMessage> copy{ m_Messages };
 
 		// clear the message list
@@ -86,8 +86,8 @@ void Sender::ProcessMessages() {
 
 			vector<char> raw_vector = msg.toCharVector();
 			string msg_content(raw_vector.begin(), raw_vector.end());
-			msg_content.append(dest_addr);
-			cout << "Message sent: " << msg_content << endl;
+			msg_content.append("|" + dest_addr);
+			cout << "\nMessage sent: " << msg_content << endl;
 			// FOR DEBUG OUTPUT - END
 		}
 	}

@@ -14,9 +14,10 @@
 
 #include "pch.h"
 #include "shared_winsock.h"
+#include "Participant.h"
 #include <vector>
 
-// definitions for messages received from clients
+// definitions for messages sent by clients
 #define REGISTER	"REGISTER"
 #define REQ_MEET	"REQUEST"
 #define ACCEPT		"ACCEPT"
@@ -25,7 +26,7 @@
 #define ADD			"ADD"
 
 // definitions for messages sent by the server
-#define SESH_START	"START"
+#define SESH_START	"START" //both server and client
 #define ACK_REG		"ACK_REGISTER"
 #define INVITE		"INVITE"
 #define CANCEL		"CANCEL"
@@ -45,9 +46,13 @@ struct BaseMessage
 
 // Message sent from server to each client to inform them of other participants
 struct SessionStartMsg : public BaseMessage
-{
-	std::vector<std::string> participants;
-	SessionStartMsg(std::string, std::vector<std::string>);
+{	
+	std::string m_Type;
+	sockaddr_in m_Destination;
+	std::vector<Participant> m_PL;
+
+	SessionStartMsg(std::string type, std::vector<Participant> pl, sockaddr_in = { 0 });
+	std::vector<char> toCharVector();
 };
 
 // Message sent from client to server to request a meeting booking

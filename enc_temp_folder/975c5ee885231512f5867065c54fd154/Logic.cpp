@@ -123,6 +123,8 @@ void Logic::HandleMessage(std::vector<char> message, sockaddr_in src_addr)
 				//  Provide all participants with participant list
 				//string serialized = SerializeParticipantList(participantlist);
 
+				
+
 				for (int i = 0; i < participantlist.size(); i++) {
 					SessionStartMsg startSession(msg_type, participantlist, participantlist[i].getClientSI());
 					/*cout << "TYPE " << startSession.m_Type << endl;

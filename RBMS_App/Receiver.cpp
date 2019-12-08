@@ -66,7 +66,7 @@ void Receiver::Startup(int port_offset)
 	m_Receiver_Addr.sin_family = AF_INET; // IPv4
 	m_Receiver_Addr.sin_addr.s_addr = INADDR_ANY;
 	m_Receiver_Addr.sin_port = htons(m_Port + port_offset);
-	printf("Bind failed with error code : %d\n", m_Port + port_offset);
+	//printf("Bind failed with error code : %d\n", m_Port + port_offset);
 
 	//Bind (use ::bind when using namespace std)
 	if (::bind(m_sock, (struct sockaddr *)&m_Receiver_Addr, sizeof(m_Receiver_Addr)) == SOCKET_ERROR)
