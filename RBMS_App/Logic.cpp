@@ -143,6 +143,24 @@ void Logic::HandleMessage(std::vector<char> message, sockaddr_in src_addr)
 				cout << "RECEIVED MESSAGE: " << msg_type << endl;
 				cout << "I SHOULD REPLY!" << endl;
 				cout << "Participant list: " << msg_content << endl;
+
+				// Find all the participants
+				for (int i = first_delim; i < last_delim) {
+					if (msg_content[i] == '|') {
+						break; // We reached the end of the participant list
+					}
+					for (int j = i; j < last_delim; j++) {
+						// until you see ,
+						if (msg_content[j] == ',') {
+							// We've reached the next participant
+							//String name = msg_content(i, j);
+							//addParticipant(name);
+							i = j + 1; // Place i after the comma
+						}
+				// addparticipant(msg_content(i,j)
+					}
+				}
+				
 			}
 			else if (msg_type == ACK_REG) { // Server has received your registration request
 				// Wait for confirmation of the session start
