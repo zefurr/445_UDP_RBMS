@@ -15,12 +15,14 @@
 
 //RQ# (incremented each for each request message)
 extern int requestCounter;
+extern int meetingCounter;
 
 class Logic
 {
 public:
 
 	static Logic& getInstance();
+	std::string SItoString(sockaddr_in si);
 	void Startup(int);
 	void Shutdown();
 
@@ -53,6 +55,7 @@ public:
 
 private:
 
+	//room1[793] = true;// room1 booked on 79th day, 3th hour
 	std::vector<bool> room1;
 	std::vector<bool> room2;
 

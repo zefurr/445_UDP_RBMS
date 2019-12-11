@@ -1,5 +1,6 @@
 #pragma once
 #include "Participant.h"
+//#include "Logic.h"
 #include <vector>
 
 struct Attendee {
@@ -39,6 +40,14 @@ private:
 public:
 	Meeting();
 	Meeting(std::string, std::string, std::string, std::string, std::string);
+
+	//getters
+	std::string getMeetingNbr();
+	std::string getRoom();
+	std::string getDateTime();
+	std::string getTopic();
+	std::string getRequester();
+
 	~Meeting();
 };
 

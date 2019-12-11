@@ -15,6 +15,14 @@ Logic& Logic::getInstance()
 	return _instance;
 }
 
+string Logic::SItoString(sockaddr_in si) {
+	string client_addr;
+	stringstream ss;
+	ss << inet_ntoa(si.sin_addr) << ":" << ntohs(si.sin_port);
+	client_addr = ss.str();
+	return client_addr;
+}
+
 //create participant and add to server side participant list
 void Logic::AddParticipant(sockaddr_in si) 
 {
@@ -120,7 +128,7 @@ void Logic::HandleMessage(std::vector<char> message, sockaddr_in src_addr)
 				// See if there is a room available at the requested time
 				int fieldCounter = 0;
 				int plCounter = 0;
-				vector<string> req_fields;
+				vector<string> req_fields; //field[0] = RQ#
 				vector<string> req_pl;
 
 				for (int i = first_delim + 1; i < last_delim + 1; i++) {
@@ -142,37 +150,46 @@ void Logic::HandleMessage(std::vector<char> message, sockaddr_in src_addr)
 					}
 				}
 				// Room is unavailable
-				if (!room1[stoi(req_fields[1])] && !room2[stoi(req_fields[1])]) {
-					for (int k = 0; k < req_pl.size(); k++) {
-						for (int q = 0; q < s_pl.size(); q++) {
-							if (req_pl[k] == s_pl[q].getClientAddr()) {
-								m_Sender.SendUDPMessage(
-									CreateRespMessage(req_fields[0]),
-									s_pl[q].getClientSI()
-								);
+				string freeRoom = "Room1";
+				if (!room1[stoi(req_fields[1])]){
+					freeRoom = "Room2";
+					if (!room2[stoi(req_fields[1])]) {
+						freeRoom = "";
+						for (int k = 0; k < req_pl.size(); k++) {
+							for (int q = 0; q < s_pl.size(); q++) {
+								if (req_pl[k] == s_pl[q].getClientAddr()) {
+									m_Sender.SendUDPMessage(
+										CreateRespMessage(req_fields[0]),
+										s_pl[q].getClientSI()
+									);
+								}
 							}
 						}
 					}
 				}
 				//Room is available
 				else {
-					//create new meeting
-					//Meeting m (to_string(meetingCounter),);
+					// Build meeting object
+					Meeting m (to_string(meetingCounter), freeRoom, req_fields[1], req_fields[4], SItoString(src_addr));
+					meetingCounter++;
+					// Start sending invitations
 					for (int k = 0; k < req_pl.size(); k++) {
 						for (int q = 0; q < s_pl.size(); q++) {
 							if (req_pl[k] == s_pl[q].getClientAddr()) {
-								/*m_Sender.SendUDPMessage(
-									CreateRespMessage(req_fields[0]),
+								m_Sender.SendUDPMessage(
+									CreateInviteMessage(
+										m.getMeetingNbr(),
+										m.getDateTime(),
+										m.getTopic(),
+										m.getRequester()
+									),
 									s_pl[q].getClientSI()
-								);*/
+								);
 							}
 						}
 					}
 				}
-				// Build meeting object
-				// Start sending invitations
-
-				//room1[793] = true;// room1 booked on 79th day, 3th hour
+				
 			}
 			else if (msg_type == ACCEPT) { // A client is accepting a meeting invitation
 				// If the meeting exists
