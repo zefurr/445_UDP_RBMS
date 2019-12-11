@@ -22,6 +22,7 @@ std::string Meeting::getMeetingNbr() {
 	return this->meeting_nbr;
 }
 
+
 std::string Meeting::getRoom() {
 	return this->room;
 }

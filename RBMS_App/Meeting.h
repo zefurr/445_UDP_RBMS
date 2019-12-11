@@ -20,7 +20,7 @@ private:
 	std::string meeting_nbr;
 	//which room
 	std::string room;
-	
+
 	// #day #hour
 	// 1-99 day
 	// 1-9 hour
@@ -31,12 +31,12 @@ private:
 	//requester
 	std::string requester;
 
-	
+
 
 	//participants
 	std::vector<Attendee> participantsMeeting;
 	//int min; // minimum attendees
-	
+
 public:
 	Meeting();
 	Meeting(std::string, std::string, std::string, std::string, std::string);
@@ -50,4 +50,3 @@ public:
 
 	~Meeting();
 };
-

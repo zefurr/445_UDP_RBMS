@@ -25,7 +25,7 @@ private:
 	WSADATA m_WSA;
 	char m_buffer[BUF_LEN];
 
-	int m_Port = 8887;
+	int m_Port = PORT - 1;
 
 
 	Receiver();
