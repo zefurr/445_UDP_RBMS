@@ -15,19 +15,30 @@ class Meeting
 {
 private:
 
-	//id
-	int meetingId;
-	//time
-	int timeslot;
+	//MT#
+	std::string meeting_nbr;
+	//which room
+	std::string room;
+	
+	// #day #hour
+	// 1-99 day
+	// 1-9 hour
+	// 172 = day 17, hour 2
+	std::string date_time;
+	//topic
 	std::string topic;
-	Participant requester;
+	//requester
+	std::string requester;
+
+	
 
 	//participants
 	std::vector<Attendee> participantsMeeting;
-	int min; // minimum attendees
+	//int min; // minimum attendees
 	
 public:
 	Meeting();
+	Meeting(std::string, std::string, std::string, std::string, std::string);
 	~Meeting();
 };
 
