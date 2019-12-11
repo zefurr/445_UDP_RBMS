@@ -48,9 +48,8 @@ int main() {
 	cout << "\t2) SERVER" << endl << endl;
 
 	cin >> input;
-	clear_screen();
 
-	if (input == -1) {
+	if (input == -1) { // Quit
 		return 0;
 	}
 	int mode = input - 1; // CLIENT = 0, SERVER = 1;
@@ -64,17 +63,13 @@ int main() {
 
 	if (mode == 0) { // Client interface
 		while (input != -1) {
-			 
+			clear_screen();
 			cout << "MEETING SCHEDULER (MS)" << endl << endl;
 
 			cout << "Choose an action (-1 to quit):" << endl;
-			cout << "\t1) Join booking session" << endl;
-			cout << "\t2) foo " << endl;
-			cout << "\t3) foo" << endl;
-			cout << "\t4) foo" << endl;
-			cout << "\t5) foo" << endl;
-			cout << "\t6) foo" << endl << endl;
+			cout << "\t1) Join booking session" << endl << endl;
 
+			input = '\0';
 			cin >> input;
 			clear_screen();
 
@@ -86,11 +81,30 @@ int main() {
 				while (input != -1) {
 				cout << "Waiting for reply from server (-1 to quit):" << endl << endl;
 
+				input = '\0';
 				cin >> input;
-				clear_screen();
+				
 				}
+				input = '\0';
 			} else if (input == 2) {
 				//RequestMsg meeting_request(REQ_MEET);
+			}
+			while (logic.inSession()) {
+				clear_screen();
+				cout << "MEETING SCHEDULER (MS)" << endl;
+				cout << "***SESSION IN PROGRESS**" << endl << endl;
+
+				cout << "Choose an action (-1 to quit):" << endl;
+				cout << "\t1) View my agenda" << endl;
+				cout << "\t2) Request a meeting " << endl;
+				cout << "\t3) foo" << endl;
+				cout << "\t4) foo" << endl;
+				cout << "\t5) foo" << endl;
+				cout << "\t6) foo" << endl << endl;
+
+				input = '\0';
+				cin >> input;
+				
 			}
 		}
 	}
@@ -122,7 +136,6 @@ int main() {
 				cout << "Press a key to return to main page ..." << endl << endl;
 				cin >> temp;
 				clear_screen();
-
 			}
 		}
 	}

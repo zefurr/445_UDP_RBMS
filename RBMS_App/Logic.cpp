@@ -158,6 +158,7 @@ void Logic::HandleMessage(std::vector<char> message, sockaddr_in src_addr)
 						}
 					}
 				}
+				m_sessionActive = true;
 			}
 			else if (msg_type == ACK_REG) { // Server has received your registration request
 				// Wait for confirmation of the session start
@@ -247,3 +248,6 @@ void Logic::Shutdown()
 	// Close the socket
 }
 
+bool Logic::inSession() {
+	return m_sessionActive;
+}

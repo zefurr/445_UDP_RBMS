@@ -41,6 +41,8 @@ public:
 	//display participant list
 	static void DisplayParticipantList();
 
+	bool inSession();
+
 private:
 
 	// Basic elements START
@@ -50,6 +52,8 @@ private:
 	bool m_Alive;
 	void MainLogic();
 	// Basic elements END
+
+	bool m_sessionActive = false;
 
 	// User elements start
 		// function to display the agenda
