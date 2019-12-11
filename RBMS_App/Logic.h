@@ -9,6 +9,7 @@
 #include <condition_variable>
 #include <algorithm>
 #include "Sender.h"
+#include "Receiver.h"
 #include "Message.h"
 #include "Participant.h"
 #include "Meeting.h"
@@ -31,7 +32,7 @@ public:
 	static std::vector<std::string> c_meetings;
 	static std::vector<Meeting> s_meetings;
 	
-	void HandleMessage(std::vector<char>, sockaddr_in);
+	void HandleMessage(std::vector<char>, sockaddr_in = { 0 });
 
 	// User elements start
 		//add a new participant
@@ -51,6 +52,11 @@ public:
 	//INVITE|MT#|DATE&TIME|TOPIC|REQUESTER
 	std::vector<char> CreateInviteMessage(std::string, std::string, std::string, std::string);
 
+	void RequestMeeting();
+
+	bool inSession();
+	int participantCount();
+
 private:
 
 	std::vector<bool> room1;
@@ -63,16 +69,28 @@ private:
 	bool m_Alive;
 	void MainLogic();
 
+
 	// Basic elements END
+
+	bool m_sessionActive = false;
+
+	// User elements start
+		// function to display the agenda
+		// function to display the participant list
+	// User elements start
+
 
 	// Consumer elements START
 	std::vector<int> m_IntMsgs;
-	std::mutex m_Mutex;
+	std::mutex m_sessionMutex;
 	std::condition_variable m_Cond_NotEmpty;
 	// Consumer elements END
 
 	// Producer elements START
+	Receiver& m_Receiver = Receiver::getInstance();
 	Sender& m_Sender = Sender::getInstance();
 	// Producer elements END
+
+	std::mutex m_partiMutex;
 };
 

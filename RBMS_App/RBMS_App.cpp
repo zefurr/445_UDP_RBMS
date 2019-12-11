@@ -17,6 +17,7 @@
 
 #define SERVER "127.0.0.1"
 #define PORT 8888
+#define MIN_CLIENTS 0
 
 void clear_screen(char fill = ' ') {
 	COORD tl = { 0,0 };
@@ -29,114 +30,205 @@ void clear_screen(char fill = ' ') {
 	SetConsoleCursorPosition(console, tl);
 }
 
-int main() {
-	using namespace std;
+using namespace std;
 
-	sockaddr_in server_addr;
-	memset((char *)&server_addr, 0, sizeof(server_addr));
-	server_addr.sin_family = AF_INET;
-	server_addr.sin_port = htons(PORT);
-	server_addr.sin_addr.S_un.S_addr = inet_addr(SERVER);
+void sMainMenu(Logic& logic) {
+	cout << "ROOM BOOKING AND MEETING SCHEDULER (RBMS)" << endl;
+	cout << "***SESSION IN PROGRESS***" << endl << endl;
 
-	int input = '\0';
-	int temp = '\0';
+	cout << "Enter -1 to shutdown" << endl;
 
-	cout << "ROOM BOOKING and MEETING SCHEDULER (RBMS)" << endl << endl;
+	int escape = '\0';
+	while (escape != -1) {
+		cin >> escape;
+	}
+}
 
-	cout << "Choose operating mode (-1 to quit):" << endl;
-	cout << "\t1) CLIENT" << endl;
-	cout << "\t2) SERVER" << endl << endl;
-
-	cin >> input;
+void sRegisterMenu(Logic& logic) {
 	clear_screen();
 
-	if (input == -1) {
-		return 0;
-	}
-	int mode = input - 1; // CLIENT = 0, SERVER = 1;
+	string input = '\0';
+	char choice = '\0';
 
-	Logic& logic = Logic::getInstance();
-	Sender& sender = Sender::getInstance();
-	Receiver& receiver = Receiver::getInstance();
-	logic.Startup(mode); // Start logic first, it's pretty harmless on it's own
-	sender.Startup(mode); // Start sender before receiver, otherwise we might get a message we can't reply to
-	receiver.Startup(mode); // Start receiver third, if we get a message we may need logic and sender
+	while (choice != 'S' && choice != 'X') {
+		cout << "ROOM BOOKING and MEETING SCHEDULER (RBMS)" << endl << endl;
 
-	if (mode == 0) { // Client interface
-		while (input != -1) {
-			 
-			cout << "MEETING SCHEDULER (MS)" << endl << endl;
+		cout << "Choose an action:" << endl;
+		cout << "\tS) Start session registration" << endl << endl;
 
-			cout << "Choose an action (-1 to quit):" << endl;
-			cout << "\t1) Join booking session" << endl;
-			cout << "\t2) foo " << endl;
-			cout << "\t3) foo" << endl;
-			cout << "\t4) foo" << endl;
-			cout << "\t5) foo" << endl;
-			cout << "\t6) foo" << endl << endl;
+		cout << "\tX) Exit application" << endl;
 
+		cin >> input;
+		while (!isalpha(input[0])) {
+			input = '\0';
+			cout << "Invalid input" << endl;
 			cin >> input;
-			clear_screen();
-
-			if (input == 1) {
-				BaseMessage reg_request(REGISTER);
-				cout << "Sending registration request ..." << endl << endl;
-				logic.HandleMessage(reg_request.toCharVector(), server_addr);
-
-				while (input != -1) {
-				cout << "Waiting for reply from server (-1 to quit):" << endl << endl;
-
-				cin >> input;
-				clear_screen();
-				}
-			} else if (input == 2) {
-				//RequestMsg meeting_request(REQ_MEET);
-			}
 		}
-	}
-	else { // Server interface
-		while (input != -1) {
+		choice = toupper(input[0]);
 
+		if (choice == 'S') {
 			cout << "ROOM BOOKING and MEETING SCHEDULER (RBMS)" << endl << endl;
 
-			cout << "Choose an action (-1 to quit):" << endl;
-			cout << "\t1) Initiate client registration mode" << endl << endl;
-			cin >> input;
-			clear_screen();
+			cout << "Server accepting registration requests (-1 to end)" << endl << endl;
 
-			if (input == 1) {
-				
-				while (input != -2) {
-					cout << "ROOM BOOKING and MEETING SCHEDULER (RBMS)" << endl << endl;
+			int escape = '\0'; // TBD there are better ways to do this
+			while (escape != -1) {
+				escape = '\0';
+				cin >> escape;
+			}
+			if (logic.participantCount() >= MIN_CLIENTS) {
 
-					cout << "Registration mode activated." << endl;
-					cout << "\t(-2 to end registration)" << endl << endl;
-					cin >> input;
-					clear_screen();
-				}
 
+				int temp = '\0';
 				cout << "Session is starting ..." << endl;
 				BaseMessage start_session(SESH_START);
-				logic.HandleMessage(start_session.toCharVector(), server_addr);
+				logic.HandleMessage(start_session.toCharVector()); // TBD remove message object
+				//logic.startSession();
 				cout << "Sent participants list to all clients." << endl;
-				cout << "Press a key to return to main page ..." << endl << endl;
-				cin >> temp;
-				clear_screen();
+
+				sMainMenu(logic);
+			}
+			else {
 
 			}
 		}
 	}
+}
 
-	// Think about the order of shutting these down
-	// If we send a message but expect a reply, we should keep the receiver open until sender thread terminates
-	// If we receive a message and need to reply, we should keep the sender open until we do
-	// Logic will be the one issuing these instructions, so where does it land?
-	cout << "Shutdown Receiver...";
-	receiver.Shutdown(); // TBD recvfrom is blocking, can't shutdown
-	cout << "DONE" << endl;
-	cout << "Shutdown Sender...";
-	sender.Shutdown();
-	cout << "DONE" << endl;
+void cMainMenu(Logic& logic) {
+	clear_screen();
+
+	string input = '\0';
+	char choice = '\0';
+
+	while (choice != 'J' && choice != 'X') {
+		cout << "MEETING SCHEDULER (MS)" << endl;
+		cout << "***SESSION IN PROGRESS***" << endl << endl;
+
+		cout << "Choose an action:" << endl;
+		cout << "\t1) View my agenda" << endl;
+		cout << "\t2) View participant list" << endl;
+		cout << "\t3) Request a meeting" << endl;
+		cout << "\t4) (Add) Join a meeting" << endl;
+		cout << "\t5) Withdraw from a meeting" << endl;
+		cout << "\t6) foo" << endl << endl;
+
+		cout << "\tX) Exit application" << endl;
+
+		cin >> input;
+
+		while (!isalpha(input[0]) && !isdigit(input[0])) {
+			input = '\0';
+			cout << "Invalid input" << endl;
+			cin >> input;
+		}
+		choice = toupper(input[0]);
+
+		switch (choice) {
+			case 'X': // Exit
+				break;
+			case '1': // View my agenda
+				//logic.printAgenda();
+				break;
+			case '2': // View participant list
+				logic.DisplayParticipantList();
+				break;
+			case '3': // Request a meeting
+				logic.RequestMeeting();
+				break;
+			case '4': // (Add) Join a meeting
+				break;
+			case '5': // Withdraw from a meeting
+				break;
+			default:
+		}
+	}
+}
+
+void cRegisterMenu(Logic& logic) {
+	clear_screen();
+
+	string input = '\0';
+	char choice = '\0';
+
+	while (choice != 'J' && choice != 'X') {
+		cout << "MEETING SCHEDULER (MS)" << endl << endl;
+
+		cout << "Choose an action:" << endl;
+		cout << "\tJ) Join booking session" << endl << endl;
+
+		cout << "\tX) Exit application" << endl;
+
+		cin >> input;
+		while (!isalpha(input[0])) {
+			input = '\0';
+			cout << "Invalid input" << endl;
+			cin >> input;
+		}
+		choice = toupper(input[0]);
+	
+		if (choice == 'J') {
+			cout << "Sending registration request ..." << endl << endl;
+
+			BaseMessage reg_request(REGISTER); // TBD get rid of the message object
+			logic.HandleMessage(reg_request.toCharVector()); // TBD get rid of the message object
+
+			int escape = '\0'; // TBD there are better ways to do this
+			while (escape != -1) {
+				cout << "Waiting for reply from server (-1 to end):" << endl << endl;
+				escape = '\0';
+				cin >> escape;
+			}
+			if (logic.inSession()) {
+				cMainMenu(logic);
+			}
+		}
+	}
+}
+
+void startMenu(Logic& logic) {
+	clear_screen();
+
+	string input = '\0';
+	char choice = '\0';
+	
+	while (choice != 'C' && choice != 'S' && choice != 'X') {
+		cout << "ROOM BOOKING and MEETING SCHEDULER (RBMS)" << endl << endl;
+
+		cout << "Choose operating mode:" << endl;
+		cout << "\tC) CLIENT" << endl;
+		cout << "\tS) SERVER" << endl << endl;
+
+		cout << "\tX) Exit application" << endl;
+
+		cin >> input;
+		while (!isalpha(input[0])) {
+			input = '\0';
+			cout << "Invalid input" << endl;
+			cin >> input;
+		}
+		choice = toupper(input[0]);
+	}
+
+	switch (choice) {
+		case 'C': // Client mode
+			logic.Startup(0); // CLIENT = 0
+			cRegisterMenu(logic);
+			break;
+		case 'S': // Server mode
+			logic.Startup(1); // SERVER = 1;
+			sRegisterMenu(logic);
+			break;
+		case 'X': // Exit
+		default:
+	}
+}
+
+int main() {
+	
+	Logic& logic = Logic::getInstance();
+	startMenu(logic);
+			
 	cout << "Shutdown Logic..." << endl;
 	logic.Shutdown();
 	cout << "DONE" << endl;
