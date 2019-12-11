@@ -21,6 +21,16 @@ Logic& Logic::getInstance()
 	return _instance;
 }
 
+string Logic::SItoString(sockaddr_in si) {
+	string client_addr;
+	stringstream ss;
+	ss << inet_ntoa(si.sin_addr) << ":" << ntohs(si.sin_port);
+	client_addr = ss.str();
+	return client_addr;
+}
+
+//create participant and add to server side participant list
+
 void Logic::AddParticipant(sockaddr_in si) 
 {
 	string client_addr;
@@ -60,6 +70,56 @@ string Logic::SerializeParticipantList(vector<string> vs)
 
 void Logic::DisplayParticipantList() {
 
+//message functions
+vector<char> Logic::CreateReqMessage(string rq_nbr) {
+	string userTemp = "";
+	string str = "REQUEST";
+	str.push_back('|');
+	str.append(to_string(requestCounter));
+	str.push_back('|');
+
+	//date and time
+	//cout << "What date and time would you like the meeting at? " 
+
+	//min participants
+
+	//create participant list
+
+	//topic
+
+}
+
+vector<char> Logic::CreateRespMessage(std::string rq_nbr) {
+	// Build a string from all the elements of the message
+	string str = "RESP";
+	str.push_back('|'); // All valid messages must contain at least one | symbol, trailing the type
+	str.append(rq_nbr);
+	str.push_back('|');
+	str.append("UNAVAILABLE");
+	str.push_back('|');
+
+	const vector<char> char_vector(str.begin(), str.end());
+
+	return char_vector;
+}
+
+vector<char> Logic::CreateInviteMessage(std::string mt_nbr, std::string date_time, std::string topic, std::string requester)
+{
+	// Build a string from all the elements of the message
+	string str = "INVITE";
+	str.push_back('|'); // All valid messages must contain at least one | symbol, trailing the type
+	str.append(mt_nbr);
+	str.push_back('|');
+	str.append(date_time);
+	str.push_back('|');
+	str.append(topic);
+	str.push_back('|');
+	str.append(requester);
+	str.push_back('|');
+
+	const vector<char> char_vector(str.begin(), str.end());
+
+	return char_vector;
 }
 
 void Logic::HandleMessage(std::vector<char> message, sockaddr_in src_addr)
@@ -90,9 +150,71 @@ void Logic::HandleMessage(std::vector<char> message, sockaddr_in src_addr)
 			}
 			else if (msg_type == REQ_MEET) { // A client wishes to create a meeting
 				// See if there is a room available at the requested time
-					// Room is available
-						// Build meeting object
-						// Start sending invitations
+
+				int fieldCounter = 0;
+				int plCounter = 0;
+				vector<string> req_fields; //field[0] = RQ#
+				vector<string> req_pl;
+
+				for (int i = first_delim + 1; i < last_delim + 1; i++) {
+					for (int j = i; j < last_delim + 1; j++) {
+						//, only in participant list
+						if (msg_content[j] == ',') {
+							cout << "FOUND ," << endl;
+							req_pl[plCounter] = msg_content.substr(i, j);
+							plCounter++;
+							i = j;
+						}
+						if (msg_content[j] == '|') {
+							cout << "FOUND |" << endl;
+							req_fields[fieldCounter] = msg_content.substr(i, j);
+							cout << "FIELD FOUND: " << req_fields[fieldCounter] << endl;
+							fieldCounter++;
+							i = j; // Place i at the comma (it will get auto incremented past the comma)
+						}
+					}
+				}
+				// Room is unavailable
+				string freeRoom = "Room1";
+				if (!room1[stoi(req_fields[1])]){
+					freeRoom = "Room2";
+					if (!room2[stoi(req_fields[1])]) {
+						freeRoom = "";
+						for (int k = 0; k < req_pl.size(); k++) {
+							for (int q = 0; q < s_pl.size(); q++) {
+								if (req_pl[k] == s_pl[q].getClientAddr()) {
+									m_Sender.SendUDPMessage(
+										CreateRespMessage(req_fields[0]),
+										s_pl[q].getClientSI()
+									);
+								}
+							}
+						}
+					}
+				}
+				//Room is available
+				else {
+					// Build meeting object
+					Meeting m (to_string(meetingCounter), freeRoom, req_fields[1], req_fields[4], SItoString(src_addr));
+					meetingCounter++;
+					// Start sending invitations
+					for (int k = 0; k < req_pl.size(); k++) {
+						for (int q = 0; q < s_pl.size(); q++) {
+							if (req_pl[k] == s_pl[q].getClientAddr()) {
+								m_Sender.SendUDPMessage(
+									CreateInviteMessage(
+										m.getMeetingNbr(),
+										m.getDateTime(),
+										m.getTopic(),
+										m.getRequester()
+									),
+									s_pl[q].getClientSI()
+								);
+							}
+						}
+					}
+				}
+				
 			}
 			else if (msg_type == ACCEPT) { // A client is accepting a meeting invitation
 				// If the meeting exists

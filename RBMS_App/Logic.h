@@ -23,12 +23,14 @@ extern std::vector<int> room1; //using int to indicate timeslots for simplicity
 extern std::vector<int> room2;
 //RQ# (incremented each for each request message)
 extern int requestCounter;
+extern int meetingCounter;
 
 class Logic
 {
 public:
 
 	static Logic& getInstance();
+	std::string SItoString(sockaddr_in si);
 	void Startup(int);
 	void Shutdown();
 	
@@ -44,10 +46,23 @@ public:
 
 	void RequestMeeting();
 
-	bool inSession();
-	int participantCount();
+
+	std::vector<char> CreateReqMessage(std::string);
+
+	//RESPONSE|RQ#|UNAVAILABLE
+	std::vector<char> CreateRespMessage(std::string);
+	//INVITE|MT#|DATE&TIME|TOPIC|REQUESTER
+	std::vector<char> CreateInviteMessage(std::string, std::string, std::string, std::string);
 
 private:
+
+	//room1[793] = true;// room1 booked on 79th day, 3th hour
+	std::vector<bool> room1;
+	std::vector<bool> room2;
+
+
+	bool inSession();
+	int participantCount();
 
 	// Basic elements START
 	Logic();
