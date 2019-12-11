@@ -64,6 +64,24 @@ void Logic::AddClientName(std::string name) {
 
 
 //message functions
+vector<char> Logic::CreateReqMessage(string rq_nbr) {
+	string userTemp = "";
+	string str = "REQUEST";
+	str.push_back('|');
+	str.append(to_string(requestCounter));
+	str.push_back('|');
+
+	//date and time
+	//cout << "What date and time would you like the meeting at? " 
+
+	//min participants
+
+	//create participant list
+
+	//topic
+
+}
+
 vector<char> Logic::CreateRespMessage(std::string rq_nbr) {
 	// Build a string from all the elements of the message
 	string str = "RESP";

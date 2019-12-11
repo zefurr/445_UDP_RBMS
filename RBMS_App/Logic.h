@@ -48,6 +48,8 @@ public:
 
 	//message functions
 
+	std::vector<char> CreateReqMessage(std::string);
+
 	//RESPONSE|RQ#|UNAVAILABLE
 	std::vector<char> CreateRespMessage(std::string);
 	//INVITE|MT#|DATE&TIME|TOPIC|REQUESTER
