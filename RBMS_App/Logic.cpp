@@ -158,6 +158,8 @@ void Logic::HandleMessage(std::vector<char> message, sockaddr_in src_addr)
 						}
 					}
 				}
+				lock_guard<mutex> seshlock(m_sessionMutex);
+				m_sessionActive = true;
 			}
 			else if (msg_type == ACK_REG) { // Server has received your registration request
 				// Wait for confirmation of the session start
@@ -231,6 +233,10 @@ void Logic::Startup(int mode)
 {
 	m_Mode = mode; // 0 = Client, 1 = Server
 	m_Alive = true;
+
+	m_Sender.Startup(mode); // Start sender before receiver, otherwise we might get a message we can't reply to
+	m_Receiver.Startup(mode); // Start receiver third, if we get a message we may need logic and sender
+
 	m_LogicThread = new thread{ &Logic::MainLogic, this };
 }
 
@@ -238,6 +244,17 @@ void Logic::Shutdown()
 {
 	m_Alive = false;
 	m_Cond_NotEmpty.notify_one();
+
+	// Think about the order of shutting these down
+	// If we send a message but expect a reply, we should keep the receiver open until sender thread terminates
+	// If we receive a message and need to reply, we should keep the sender open until we do
+	// Logic will be the one issuing these instructions, so where does it land?
+	cout << "Shutdown Receiver...";
+	m_Receiver.Shutdown(); // TBD recvfrom is blocking, can't shutdown
+	cout << "DONE" << endl;
+	cout << "Shutdown Sender...";
+	m_Sender.Shutdown();
+	cout << "DONE" << endl;
 
 	if (m_LogicThread->joinable()) {
 		m_LogicThread->join();
@@ -247,3 +264,18 @@ void Logic::Shutdown()
 	// Close the socket
 }
 
+bool Logic::inSession() {
+	lock_guard<mutex> seshlock(m_sessionMutex);
+	return m_sessionActive;
+}
+
+void Logic::RequestMeeting() {
+	cout << "Fill out some information" << endl;
+	cout << "Make sure it's valid" << endl;
+	cout << "Create an object for processing by the thread" << endl;
+}
+
+int Logic::participantCount() {
+	lock_guard<mutex> partilock(m_partiMutex);
+	return 1;
+}
