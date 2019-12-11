@@ -26,7 +26,8 @@
 #define ADD			"ADD"
 
 // definitions for messages sent by the server
-#define SESH_START	"START" //both server and client
+#define RESPONSE	"RESP"
+#define SESH_START	"START" 
 #define ACK_REG		"ACK_REGISTER"
 #define INVITE		"INVITE"
 #define CANCEL		"CANCEL"

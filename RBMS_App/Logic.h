@@ -13,13 +13,6 @@
 #include "Participant.h"
 #include "Meeting.h"
 
-//init global vector holding 
-extern std::vector<Participant> participantlist;
-extern std::vector<Meeting> meetings;
-//extern std::vector<std::string> participantlist;
-//extern std::vector<std::string> meetings;
-extern std::vector<int> room1; //using int to indicate timeslots for simplicity
-extern std::vector<int> room2;
 //RQ# (incremented each for each request message)
 extern int requestCounter;
 
@@ -30,18 +23,38 @@ public:
 	static Logic& getInstance();
 	void Startup(int);
 	void Shutdown();
+
+	//client only knows participant names
+	std::vector<std::string> c_pl;
+	std::vector<Participant> s_pl;
+
+	static std::vector<std::string> c_meetings;
+	static std::vector<Meeting> s_meetings;
 	
 	void HandleMessage(std::vector<char>, sockaddr_in);
 
-	//add a new participant
-	static void AddParticipant(sockaddr_in);
-	std::string SerializeParticipantList(std::vector<std::string> vs);
-	//serialize participant list into a string
-	//string SerializeParticipantList(vector<string>);
-	//display participant list
-	static void DisplayParticipantList();
+	// User elements start
+		//add a new participant
+	void AddParticipant(sockaddr_in);
+	// function to display the agenda
+	void DisplayAgenda(Participant);
+	// function to display the participant list
+	void DisplayParticipantList();
+	//client functions
+	void AddClientName(std::string);
+	// User elements start
+
+	//message functions
+
+	//RESPONSE|RQ#|UNAVAILABLE
+	std::vector<char> CreateRespMessage(std::string);
+	//INVITE|MT#|DATE&TIME|TOPIC|REQUESTER
+	std::vector<char> CreateInviteMessage(std::string, std::string, std::string, std::string);
 
 private:
+
+	std::vector<bool> room1;
+	std::vector<bool> room2;
 
 	// Basic elements START
 	Logic();
@@ -49,12 +62,8 @@ private:
 	int m_Mode;
 	bool m_Alive;
 	void MainLogic();
-	// Basic elements END
 
-	// User elements start
-		// function to display the agenda
-		// function to display the participant list
-	// User elements start
+	// Basic elements END
 
 	// Consumer elements START
 	std::vector<int> m_IntMsgs;

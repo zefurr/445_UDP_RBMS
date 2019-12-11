@@ -60,7 +60,6 @@ std::vector<char> SessionStartMsg::toCharVector()
 		}
 	}
 	str.push_back('|');
-	std::cout << "STRRR: " << str << endl;
 	const vector<char> char_vector(str.begin(), str.end());
 	
 
