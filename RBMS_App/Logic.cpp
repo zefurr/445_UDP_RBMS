@@ -137,6 +137,12 @@ void Logic::HandleMessage(std::vector<char> message, sockaddr_in src_addr)
 			}
 		}
 		else { // Client logic (m_Mode == 0 ) 
+			sockaddr_in server_addr;
+			memset((char *)&server_addr, 0, sizeof(server_addr));
+			server_addr.sin_family = AF_INET;
+			server_addr.sin_port = htons(PORT);
+			server_addr.sin_addr.S_un.S_addr = inet_addr(SERVER);
+
 			if (msg_type == SESH_START) { // Session has begun, server is providing participant list
 				// Send an acknowledgement
 				cout << "RECEIVED MESSAGE: " << msg_type << endl;
@@ -185,8 +191,8 @@ void Logic::HandleMessage(std::vector<char> message, sockaddr_in src_addr)
 				// TBD - then converted the vector to string
 				// TBD - now we're making a message from string + sockaddr
 				// TBD - should just keep it as a message from start to finish
-				BaseMessage reg_client(msg_type, src_addr); // src_addr somewhat misleading when we get client commands
-				m_Sender.SendUDPMessage(reg_client.toCharVector(), src_addr);
+				BaseMessage reg_client(msg_type, server_addr); // src_addr somewhat misleading when we get client commands
+				m_Sender.SendUDPMessage(reg_client.toCharVector(), server_addr);
 			}
 			else { // Unsupported message (either invalid or meant for server logic)
 			}
@@ -234,10 +240,9 @@ void Logic::Startup(int mode)
 	m_Mode = mode; // 0 = Client, 1 = Server
 	m_Alive = true;
 
-	m_Sender.Startup(mode); // Start sender before receiver, otherwise we might get a message we can't reply to
-	m_Receiver.Startup(mode); // Start receiver third, if we get a message we may need logic and sender
-
-	m_LogicThread = new thread{ &Logic::MainLogic, this };
+	m_LogicThread = new thread{ &Logic::MainLogic, this }; // Start logic first, it's harmless on its own
+	m_Sender.Startup(m_Mode); // Start sender before receiver, otherwise we might get a message we can't reply to
+	//m_Receiver.Startup(mode); // Start receiver third, if we get a message we may need logic and sender
 }
 
 void Logic::Shutdown()
@@ -250,7 +255,7 @@ void Logic::Shutdown()
 	// If we receive a message and need to reply, we should keep the sender open until we do
 	// Logic will be the one issuing these instructions, so where does it land?
 	cout << "Shutdown Receiver...";
-	m_Receiver.Shutdown(); // TBD recvfrom is blocking, can't shutdown
+	//m_Receiver.Shutdown(); // TBD recvfrom is blocking, can't shutdown // Circular dependency
 	cout << "DONE" << endl;
 	cout << "Shutdown Sender...";
 	m_Sender.Shutdown();

@@ -9,7 +9,7 @@
 #include <condition_variable>
 #include <algorithm>
 #include "Sender.h"
-#include "Receiver.h"
+//#include "Receiver.h" // Circular dependency
 #include "Message.h"
 #include "Participant.h"
 #include "Meeting.h"
@@ -71,7 +71,7 @@ private:
 	// Consumer elements END
 
 	// Producer elements START
-	Receiver& m_Receiver = Receiver::getInstance();
+	//Receiver& m_Receiver = Receiver::getInstance(); // Circular dependency
 	Sender& m_Sender = Sender::getInstance();
 	// Producer elements END
 

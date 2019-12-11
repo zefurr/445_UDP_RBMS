@@ -8,26 +8,24 @@
 #include <mutex>
 #include <string>
 #include <condition_variable>
-#include "Sender.h"
-#include "Receiver.h"
 #include "Message.h"
 #include "shared_winsock.h"
+#include "Logic.h"
+#include "Receiver.h"
 
 #include <windows.h> // For clear_screen()
 
-#define SERVER "127.0.0.1"
-#define PORT 8888
 #define MIN_CLIENTS 0
 
 void clear_screen(char fill = ' ') {
-	COORD tl = { 0,0 };
+	/*COORD tl = { 0,0 };
 	CONSOLE_SCREEN_BUFFER_INFO s;
 	HANDLE console = GetStdHandle(STD_OUTPUT_HANDLE);
 	GetConsoleScreenBufferInfo(console, &s);
 	DWORD written, cells = s.dwSize.X * s.dwSize.Y;
 	FillConsoleOutputCharacter(console, fill, cells, tl, &written);
 	FillConsoleOutputAttribute(console, s.wAttributes, cells, tl, &written);
-	SetConsoleCursorPosition(console, tl);
+	SetConsoleCursorPosition(console, tl);*/
 }
 
 using namespace std;
@@ -45,9 +43,12 @@ void sMainMenu(Logic& logic) {
 }
 
 void sRegisterMenu(Logic& logic) {
+	Receiver& receiver = Receiver::getInstance();
+	receiver.Startup(1);
+
 	clear_screen();
 
-	string input = '\0';
+	string input = "";
 	char choice = '\0';
 
 	while (choice != 'S' && choice != 'X') {
@@ -60,13 +61,15 @@ void sRegisterMenu(Logic& logic) {
 
 		cin >> input;
 		while (!isalpha(input[0])) {
-			input = '\0';
+			input = "";
 			cout << "Invalid input" << endl;
 			cin >> input;
 		}
 		choice = toupper(input[0]);
 
 		if (choice == 'S') {
+
+
 			cout << "ROOM BOOKING and MEETING SCHEDULER (RBMS)" << endl << endl;
 
 			cout << "Server accepting registration requests (-1 to end)" << endl << endl;
@@ -98,7 +101,7 @@ void sRegisterMenu(Logic& logic) {
 void cMainMenu(Logic& logic) {
 	clear_screen();
 
-	string input = '\0';
+	string input = "";
 	char choice = '\0';
 
 	while (choice != 'J' && choice != 'X') {
@@ -118,7 +121,7 @@ void cMainMenu(Logic& logic) {
 		cin >> input;
 
 		while (!isalpha(input[0]) && !isdigit(input[0])) {
-			input = '\0';
+			input = "";
 			cout << "Invalid input" << endl;
 			cin >> input;
 		}
@@ -141,14 +144,18 @@ void cMainMenu(Logic& logic) {
 			case '5': // Withdraw from a meeting
 				break;
 			default:
+				break;
 		}
 	}
 }
 
 void cRegisterMenu(Logic& logic) {
+	Receiver& receiver = Receiver::getInstance();
+	receiver.Startup(0);
+
 	clear_screen();
 
-	string input = '\0';
+	string input = "";
 	char choice = '\0';
 
 	while (choice != 'J' && choice != 'X') {
@@ -161,7 +168,7 @@ void cRegisterMenu(Logic& logic) {
 
 		cin >> input;
 		while (!isalpha(input[0])) {
-			input = '\0';
+			input = "";
 			cout << "Invalid input" << endl;
 			cin >> input;
 		}
@@ -189,7 +196,7 @@ void cRegisterMenu(Logic& logic) {
 void startMenu(Logic& logic) {
 	clear_screen();
 
-	string input = '\0';
+	string input = "";
 	char choice = '\0';
 	
 	while (choice != 'C' && choice != 'S' && choice != 'X') {
@@ -203,7 +210,7 @@ void startMenu(Logic& logic) {
 
 		cin >> input;
 		while (!isalpha(input[0])) {
-			input = '\0';
+			input = "";
 			cout << "Invalid input" << endl;
 			cin >> input;
 		}
@@ -220,7 +227,9 @@ void startMenu(Logic& logic) {
 			sRegisterMenu(logic);
 			break;
 		case 'X': // Exit
+			break;
 		default:
+			break;
 	}
 }
 
