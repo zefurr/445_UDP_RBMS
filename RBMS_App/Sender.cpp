@@ -72,6 +72,9 @@ void Sender::ProcessMessages() {
 			m_Dest_Addr.sin_port = htons(m_Port - m_PortOffset);
 			m_Dest_Addr.sin_addr = msg.dest.sin_addr;
 
+
+			printf("sendto() : %d", m_Port - m_PortOffset);
+
 			//send the message
 			if (sendto(m_sock, m_buffer, strlen(m_buffer), 0, (struct sockaddr *) &m_Dest_Addr, m_sockaddr_len) == SOCKET_ERROR)
 			{

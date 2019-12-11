@@ -47,6 +47,8 @@ void Receiver::Listen() {
 
 		// TBD how to escape this blocking call when the server shuts down?
 		// try to receive some data, this is a blocking call
+		printf("Listening...");
+
 		if ((recvfrom(m_sock, m_buffer, BUF_LEN, 0, (struct sockaddr *) &m_Src_Addr, &m_sockaddr_len)) == SOCKET_ERROR)
 		{
 			printf("recvfrom() failed with error code : %d\n", WSAGetLastError());
@@ -62,11 +64,12 @@ void Receiver::Listen() {
 
 void Receiver::Startup(int port_offset)
 {
+	printf("Eh...");
 	//Prepare the sockaddr_in structure
 	m_Receiver_Addr.sin_family = AF_INET; // IPv4
 	m_Receiver_Addr.sin_addr.s_addr = INADDR_ANY;
 	m_Receiver_Addr.sin_port = htons(m_Port + port_offset);
-	//printf("Bind failed with error code : %d\n", m_Port + port_offset);
+	printf("Bind attempt on port : %d\n", m_Port + port_offset);
 
 	//Bind (use ::bind when using namespace std)
 	if (::bind(m_sock, (struct sockaddr *)&m_Receiver_Addr, sizeof(m_Receiver_Addr)) == SOCKET_ERROR)
@@ -77,7 +80,7 @@ void Receiver::Startup(int port_offset)
 	//puts("Bind done\n");
 
 	m_Alive = true;
-
+	
 	m_ListeningThread = new thread{ &Receiver::Listen, this };
 }
 

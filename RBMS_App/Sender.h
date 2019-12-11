@@ -37,7 +37,7 @@ private:
 	int m_sockaddr_len;
 	WSADATA m_WSA;
 	char m_buffer[BUF_LEN];
-	int m_Port = 8888;
+	int m_Port = PORT;
 	int m_PortOffset = 0;
 
 	std::thread* m_ProcessingThread = nullptr;
