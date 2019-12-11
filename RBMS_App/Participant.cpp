@@ -5,6 +5,12 @@
 //define static int
 int Participant::clientCounter;
 
+const std::vector<std::string> initialAvailabilities = 
+{
+	//e.g. 12 means timeslot 2 in room 1
+	"11", "12", "13", "21", "22", "23"
+};
+
 Participant::Participant()
 {
 }
@@ -14,6 +20,7 @@ Participant::Participant(std::string client_addr, sockaddr_in client_si)
 	this->client_addr = client_addr;
 	this->client_si = client_si;
 	this->client_name = "C" + std::to_string(this->clientCounter);
+	this->availabilites = initialAvailabilities;
 	this->organizer = false;
 
 	this->clientCounter++;

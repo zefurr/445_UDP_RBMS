@@ -4,10 +4,16 @@
 #include <iostream> // for debugging 
 
 using namespace std;
+//declare extern vector
+vector<Participant> participantlist;
+vector<Meeting> meetings;
+//vector<string> participantlist;
+//vector<string> meetings;
+vector<int> room1;
+vector<int> room2;
 
 //intialize counters at 0
 int requestCounter = 0;
-int meetingCounter = 0;
 
 Logic& Logic::getInstance() 
 {
@@ -15,7 +21,6 @@ Logic& Logic::getInstance()
 	return _instance;
 }
 
-//create participant and add to server side participant list
 void Logic::AddParticipant(sockaddr_in si) 
 {
 	string client_addr;
@@ -25,68 +30,36 @@ void Logic::AddParticipant(sockaddr_in si)
 
 	Participant p(client_addr, si);
 
-
 	/*if (find(participantlist.begin(), participantlist.end(), p) != participantlist.end()) 
 	{
 		cout << "Client is already registered !" << endl;
 	}
 	else 
 	{*/
-
-		s_pl.push_back(p);
+		participantlist.push_back(p);
 	//	cout << "Client with name " + p.getClientName() + " and with address " + p.getClientAddr() + " successfully registered." << endl;
 	//}
 }
 
-void Logic::DisplayAgenda(Participant)
+string Logic::SerializeParticipantList(vector<string> vs)
 {
+	string serialized = "";
 
+	for (int i = 0; i < vs.size(); i++) 
+	{
+		while (vs[i] != vs.back())
+		{
+			serialized.append(vs[i] + ",");
+		}
+			
+		serialized.append(vs[i]);
+	}
+
+	return serialized;
 }
 
 void Logic::DisplayParticipantList() {
 
-}
-
-//client functions
-
-//add clients name in the client side participant list
-void Logic::AddClientName(std::string name) {
-	c_pl.push_back(name);
-}
-
-
-//message functions
-vector<char> Logic::CreateRespMessage(std::string rq_nbr) {
-	// Build a string from all the elements of the message
-	string str = "RESP";
-	str.push_back('|'); // All valid messages must contain at least one | symbol, trailing the type
-	str.append(rq_nbr);
-	str.push_back('|');
-	str.append("UNAVAILABLE");
-	str.push_back('|');
-
-	const vector<char> char_vector(str.begin(), str.end());
-
-	return char_vector;
-}
-
-vector<char> Logic::CreateInviteMessage(std::string mt_nbr, std::string date_time, std::string topic, std::string requester)
-{
-	// Build a string from all the elements of the message
-	string str = "INVITE";
-	str.push_back('|'); // All valid messages must contain at least one | symbol, trailing the type
-	str.append(mt_nbr);
-	str.push_back('|');
-	str.append(date_time);
-	str.push_back('|');
-	str.append(topic);
-	str.push_back('|');
-	str.append(requester);
-	str.push_back('|');
-
-	const vector<char> char_vector(str.begin(), str.end());
-
-	return char_vector;
 }
 
 void Logic::HandleMessage(std::vector<char> message, sockaddr_in src_addr)
@@ -110,69 +83,16 @@ void Logic::HandleMessage(std::vector<char> message, sockaddr_in src_addr)
 		{
 			if (msg_type == REGISTER) { // A client wishes to register for this session
 				// Add them to the participants list in memory
-				AddParticipant(src_addr);
+				Logic::AddParticipant(src_addr);
 				// Reply with an acknowledgement of their request
 				BaseMessage ack_reg(ACK_REG, src_addr);
 				m_Sender.SendUDPMessage(ack_reg.toCharVector(), src_addr);
 			}
 			else if (msg_type == REQ_MEET) { // A client wishes to create a meeting
-				//format of REQ: REQUEST|RQ#|123(DATE AND TIME)|3(MIN)|P_LIST|SALAD(TOPIC)|
 				// See if there is a room available at the requested time
-				int fieldCounter = 0;
-				int plCounter = 0;
-				vector<string> req_fields;
-				vector<string> req_pl;
-
-				for (int i = first_delim + 1; i < last_delim + 1; i++) {
-					for (int j = i; j < last_delim + 1; j++) {
-						//, only in participant list
-						if (msg_content[j] == ',') {
-							cout << "FOUND ," << endl;
-							req_pl[plCounter] = msg_content.substr(i, j);
-							plCounter++;
-							i = j;
-						}
-						if (msg_content[j] == '|') {
-							cout << "FOUND |" << endl;
-							req_fields[fieldCounter] = msg_content.substr(i, j);
-							cout << "FIELD FOUND: " << req_fields[fieldCounter] << endl;
-							fieldCounter++;
-							i = j; // Place i at the comma (it will get auto incremented past the comma)
-						}
-					}
-				}
-				// Room is unavailable
-				if (!room1[stoi(req_fields[1])] && !room2[stoi(req_fields[1])]) {
-					for (int k = 0; k < req_pl.size(); k++) {
-						for (int q = 0; q < s_pl.size(); q++) {
-							if (req_pl[k] == s_pl[q].getClientAddr()) {
-								m_Sender.SendUDPMessage(
-									CreateRespMessage(req_fields[0]),
-									s_pl[q].getClientSI()
-								);
-							}
-						}
-					}
-				}
-				//Room is available
-				else {
-					//create new meeting
-					//Meeting m (to_string(meetingCounter),);
-					for (int k = 0; k < req_pl.size(); k++) {
-						for (int q = 0; q < s_pl.size(); q++) {
-							if (req_pl[k] == s_pl[q].getClientAddr()) {
-								/*m_Sender.SendUDPMessage(
-									CreateRespMessage(req_fields[0]),
-									s_pl[q].getClientSI()
-								);*/
-							}
-						}
-					}
-				}
-				// Build meeting object
-				// Start sending invitations
-
-				//room1[793] = true;// room1 booked on 79th day, 3th hour
+					// Room is available
+						// Build meeting object
+						// Start sending invitations
 			}
 			else if (msg_type == ACCEPT) { // A client is accepting a meeting invitation
 				// If the meeting exists
@@ -204,19 +124,11 @@ void Logic::HandleMessage(std::vector<char> message, sockaddr_in src_addr)
 			else if (msg_type == SESH_START) { // User at server terminal has ended the registration period
 				//  Provide all participants with participant list
 				//string serialized = SerializeParticipantList(participantlist);
-				//vector<char> temp1;// = s_pl.makeStartMessage();
-				////string temp1 = "";
-				//for (Participant p : s_pl) {
-				//	temp1.push_back(p.getClientName();
-				//	temp1 += ",";
-				//}
-				/*SessionStartMsg startSession(msg_type, s_pl);
-				for (Participant p : s_pl) {
-					
-					m_Sender.SendUDPMessage(startSession.toCharVector(), p.getClientSI());
-				}*/
-				for (int i = 0; i < s_pl.size(); i++) {
-					SessionStartMsg startSession(msg_type, s_pl, s_pl[i].getClientSI());
+
+				for (int i = 0; i < participantlist.size(); i++) {
+					SessionStartMsg startSession(msg_type, participantlist, participantlist[i].getClientSI());
+					/*cout << "TYPE " << startSession.m_Type << endl;
+					cout << "NAME " << startSession.m_Participant << endl;*/
 					m_Sender.SendUDPMessage(startSession.toCharVector(), startSession.m_Destination);
 				}	
 			}
@@ -227,28 +139,21 @@ void Logic::HandleMessage(std::vector<char> message, sockaddr_in src_addr)
 		else { // Client logic (m_Mode == 0 ) 
 			if (msg_type == SESH_START) { // Session has begun, server is providing participant list
 				// Send an acknowledgement
-
+				cout << "RECEIVED MESSAGE: " << msg_type << endl;
+				cout << "I SHOULD REPLY!" << endl;
 				cout << "Participant list: " << msg_content << endl;
-				string name = "";
+
 				// Find all the participants
-				for (int i = first_delim + 1; i < last_delim + 1; i++) {
+				for (int i = first_delim + 1; i < last_delim; i++) {
 					if (msg_content[i] == '|') {
-						if (name.empty()) {
-							name = msg_content.substr(first_delim + 1, last_delim - 1);
-							cout << "ONLY ONE NAME: " << name << endl;
-							AddClientName(name);
-						}
 						break; // We reached the end of the participant list
 					}
 					for (int j = i; j < last_delim; j++) {
 						// until you see ,
 						if (msg_content[j] == ',') {
-							cout << "FOUND ," << endl;
 							// We've reached the next participant
-							//populate client side participant list
-							name = msg_content.substr(i, j);
-							AddClientName(name);
-							cout << "FOUND: " << c_pl[0] << endl;
+							//String name = msg_content(i, j);
+							//addParticipant(name);
 							i = j; // Place i at the comma (it will get auto incremented past the comma)
 						}
 					}
@@ -261,9 +166,6 @@ void Logic::HandleMessage(std::vector<char> message, sockaddr_in src_addr)
 				cout << "RECEIVED MESSAGE: " << msg_type << endl;
 			}
 			else if (msg_type == INVITE) { // Server is forwarding a meeting invitation
-				// "INVITE|MT|DATE|TIME|TOPIC|REQUESTER
-				// "INVITE|05|104      |Title|c5"
-				// 
 				// Check agenda
 
 				// If available reply with ACCEPT
