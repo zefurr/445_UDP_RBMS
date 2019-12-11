@@ -4,10 +4,16 @@
 #include <iostream> // for debugging 
 
 using namespace std;
+//declare extern vector
+vector<Participant> participantlist;
+vector<Meeting> meetings;
+//vector<string> participantlist;
+//vector<string> meetings;
+vector<int> room1;
+vector<int> room2;
 
 //intialize counters at 0
 int requestCounter = 0;
-int meetingCounter = 0;
 
 Logic& Logic::getInstance() 
 {
@@ -24,6 +30,7 @@ string Logic::SItoString(sockaddr_in si) {
 }
 
 //create participant and add to server side participant list
+
 void Logic::AddParticipant(sockaddr_in si) 
 {
 	string client_addr;
@@ -33,35 +40,35 @@ void Logic::AddParticipant(sockaddr_in si)
 
 	Participant p(client_addr, si);
 
-
 	/*if (find(participantlist.begin(), participantlist.end(), p) != participantlist.end()) 
 	{
 		cout << "Client is already registered !" << endl;
 	}
 	else 
 	{*/
-
-		s_pl.push_back(p);
+		participantlist.push_back(p);
 	//	cout << "Client with name " + p.getClientName() + " and with address " + p.getClientAddr() + " successfully registered." << endl;
 	//}
 }
 
-void Logic::DisplayAgenda(Participant)
+string Logic::SerializeParticipantList(vector<string> vs)
 {
+	string serialized = "";
 
+	for (int i = 0; i < vs.size(); i++) 
+	{
+		while (vs[i] != vs.back())
+		{
+			serialized.append(vs[i] + ",");
+		}
+			
+		serialized.append(vs[i]);
+	}
+
+	return serialized;
 }
 
 void Logic::DisplayParticipantList() {
-
-}
-
-//client functions
-
-//add clients name in the client side participant list
-void Logic::AddClientName(std::string name) {
-	c_pl.push_back(name);
-}
-
 
 //message functions
 vector<char> Logic::CreateReqMessage(string rq_nbr) {
@@ -136,14 +143,14 @@ void Logic::HandleMessage(std::vector<char> message, sockaddr_in src_addr)
 		{
 			if (msg_type == REGISTER) { // A client wishes to register for this session
 				// Add them to the participants list in memory
-				AddParticipant(src_addr);
+				Logic::AddParticipant(src_addr);
 				// Reply with an acknowledgement of their request
 				BaseMessage ack_reg(ACK_REG, src_addr);
 				m_Sender.SendUDPMessage(ack_reg.toCharVector(), src_addr);
 			}
 			else if (msg_type == REQ_MEET) { // A client wishes to create a meeting
-				//format of REQ: REQUEST|RQ#|123(DATE AND TIME)|3(MIN)|P_LIST|SALAD(TOPIC)|
 				// See if there is a room available at the requested time
+
 				int fieldCounter = 0;
 				int plCounter = 0;
 				vector<string> req_fields; //field[0] = RQ#
@@ -239,19 +246,11 @@ void Logic::HandleMessage(std::vector<char> message, sockaddr_in src_addr)
 			else if (msg_type == SESH_START) { // User at server terminal has ended the registration period
 				//  Provide all participants with participant list
 				//string serialized = SerializeParticipantList(participantlist);
-				//vector<char> temp1;// = s_pl.makeStartMessage();
-				////string temp1 = "";
-				//for (Participant p : s_pl) {
-				//	temp1.push_back(p.getClientName();
-				//	temp1 += ",";
-				//}
-				/*SessionStartMsg startSession(msg_type, s_pl);
-				for (Participant p : s_pl) {
-					
-					m_Sender.SendUDPMessage(startSession.toCharVector(), p.getClientSI());
-				}*/
-				for (int i = 0; i < s_pl.size(); i++) {
-					SessionStartMsg startSession(msg_type, s_pl, s_pl[i].getClientSI());
+
+				for (int i = 0; i < participantlist.size(); i++) {
+					SessionStartMsg startSession(msg_type, participantlist, participantlist[i].getClientSI());
+					/*cout << "TYPE " << startSession.m_Type << endl;
+					cout << "NAME " << startSession.m_Participant << endl;*/
 					m_Sender.SendUDPMessage(startSession.toCharVector(), startSession.m_Destination);
 				}	
 			}
@@ -260,43 +259,41 @@ void Logic::HandleMessage(std::vector<char> message, sockaddr_in src_addr)
 			}
 		}
 		else { // Client logic (m_Mode == 0 ) 
+			sockaddr_in server_addr;
+			memset((char *)&server_addr, 0, sizeof(server_addr));
+			server_addr.sin_family = AF_INET;
+			server_addr.sin_port = htons(PORT);
+			server_addr.sin_addr.S_un.S_addr = inet_addr(SERVER);
+
 			if (msg_type == SESH_START) { // Session has begun, server is providing participant list
 				// Send an acknowledgement
-
+				cout << "RECEIVED MESSAGE: " << msg_type << endl;
+				cout << "I SHOULD REPLY!" << endl;
 				cout << "Participant list: " << msg_content << endl;
-				string name = "";
+
 				// Find all the participants
-				for (int i = first_delim + 1; i < last_delim + 1; i++) {
+				for (int i = first_delim + 1; i < last_delim; i++) {
 					if (msg_content[i] == '|') {
-						if (name.empty()) {
-							name = msg_content.substr(first_delim + 1, last_delim - 1);
-							cout << "ONLY ONE NAME: " << name << endl;
-							AddClientName(name);
-						}
 						break; // We reached the end of the participant list
 					}
 					for (int j = i; j < last_delim; j++) {
 						// until you see ,
 						if (msg_content[j] == ',') {
-							cout << "FOUND ," << endl;
 							// We've reached the next participant
-							//populate client side participant list
-							name = msg_content.substr(i, j);
-							AddClientName(name);
-							cout << "FOUND: " << c_pl[0] << endl;
+							//String name = msg_content(i, j);
+							//addParticipant(name);
 							i = j; // Place i at the comma (it will get auto incremented past the comma)
 						}
 					}
 				}
+				lock_guard<mutex> seshlock(m_sessionMutex);
+				m_sessionActive = true;
 			}
 			else if (msg_type == ACK_REG) { // Server has received your registration request
 				// Wait for confirmation of the session start
 				cout << "RECEIVED MESSAGE: " << msg_type << endl;
 			}
 			else if (msg_type == INVITE) { // Server is forwarding a meeting invitation
-				// "INVITE|MT|DATE|TIME|TOPIC|REQUESTER
-				// "INVITE|05|104      |Title|c5"
-				// 
 				// Check agenda
 
 				// If available reply with ACCEPT
@@ -316,8 +313,8 @@ void Logic::HandleMessage(std::vector<char> message, sockaddr_in src_addr)
 				// TBD - then converted the vector to string
 				// TBD - now we're making a message from string + sockaddr
 				// TBD - should just keep it as a message from start to finish
-				BaseMessage reg_client(msg_type, src_addr); // src_addr somewhat misleading when we get client commands
-				m_Sender.SendUDPMessage(reg_client.toCharVector(), src_addr);
+				BaseMessage reg_client(msg_type, server_addr); // src_addr somewhat misleading when we get client commands
+				m_Sender.SendUDPMessage(reg_client.toCharVector(), server_addr);
 			}
 			else { // Unsupported message (either invalid or meant for server logic)
 			}
@@ -364,13 +361,27 @@ void Logic::Startup(int mode)
 {
 	m_Mode = mode; // 0 = Client, 1 = Server
 	m_Alive = true;
-	m_LogicThread = new thread{ &Logic::MainLogic, this };
+
+	m_LogicThread = new thread{ &Logic::MainLogic, this }; // Start logic first, it's harmless on its own
+	m_Sender.Startup(m_Mode); // Start sender before receiver, otherwise we might get a message we can't reply to
+	//m_Receiver.Startup(mode); // Start receiver third, if we get a message we may need logic and sender
 }
 
 void Logic::Shutdown()
 {
 	m_Alive = false;
 	m_Cond_NotEmpty.notify_one();
+
+	// Think about the order of shutting these down
+	// If we send a message but expect a reply, we should keep the receiver open until sender thread terminates
+	// If we receive a message and need to reply, we should keep the sender open until we do
+	// Logic will be the one issuing these instructions, so where does it land?
+	cout << "Shutdown Receiver...";
+	//m_Receiver.Shutdown(); // TBD recvfrom is blocking, can't shutdown // Circular dependency
+	cout << "DONE" << endl;
+	cout << "Shutdown Sender...";
+	m_Sender.Shutdown();
+	cout << "DONE" << endl;
 
 	if (m_LogicThread->joinable()) {
 		m_LogicThread->join();
@@ -380,3 +391,18 @@ void Logic::Shutdown()
 	// Close the socket
 }
 
+bool Logic::inSession() {
+	lock_guard<mutex> seshlock(m_sessionMutex);
+	return m_sessionActive;
+}
+
+void Logic::RequestMeeting() {
+	cout << "Fill out some information" << endl;
+	cout << "Make sure it's valid" << endl;
+	cout << "Create an object for processing by the thread" << endl;
+}
+
+int Logic::participantCount() {
+	lock_guard<mutex> partilock(m_partiMutex);
+	return 1;
+}
