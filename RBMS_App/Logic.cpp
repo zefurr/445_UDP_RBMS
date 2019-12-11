@@ -73,13 +73,52 @@ vector<char> Logic::CreateReqMessage(string rq_nbr) {
 
 	//date and time
 
-	cout << "What date and time would you like the meeting at? " << endl;
+	cout << "Enter date and time of the meeting: (111-999)" << endl;
+	cout << "First 2 digits signify day (1-99) and 3rd is the hour (1-9) " << endl;
+	cin >> userTemp;
+	while (stoi(userTemp) < 111 && stoi(userTemp) > 999) {
+		cout << "Wrong format, try again with a number between 111-999 !" << endl;
+		cin >> userTemp;
+	}
+	str.append(userTemp);
+	str.push_back('|');
 
 	//min participants
-
+	cout << "Enter minimum number of participants:" << endl;
+	cout << "Max: " << s_pl.size() << endl;
+	cin >> userTemp;
+	while (stoi(userTemp) > s_pl.size()) {
+		cout << "Maximum exceeded, enter another number !" << endl;
+		cin >> userTemp;
+	}
+	str.append(userTemp);
+	str.push_back('|');
+	
 	//create participant list
+	cout << "Enter names of participants for the meeting:" << endl;
+	cout << "Enter -1 when you are done adding." << endl;
+	while (stoi(userTemp) != -1) {
+		cin >> userTemp;
+		for (int i = 0; i < s_pl.size(); i++){
+			if (s_pl[i].getClientName() != userTemp) {
+				cout << "Client does not exist !" << endl;
+			}
+			else {
+				str.append(userTemp);
+				if (i != s_pl.size()-1) {
+					str.push_back(',');
+				}
+			}
+		}
+	}
+	str.push_back('|');
 
 	//topic
+	cout << "Enter topic of the meeting:" << endl;
+	cin >> userTemp;
+	str.append(userTemp);
+	str.push_back('|');
+	
 
 	const vector<char> char_vector(str.begin(), str.end());
 	return char_vector;
