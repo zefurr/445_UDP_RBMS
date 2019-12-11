@@ -51,24 +51,25 @@ void Logic::AddParticipant(sockaddr_in si)
 	//}
 }
 
-string Logic::SerializeParticipantList(vector<string> vs)
-{
-	string serialized = "";
-
-	for (int i = 0; i < vs.size(); i++) 
-	{
-		while (vs[i] != vs.back())
-		{
-			serialized.append(vs[i] + ",");
-		}
-			
-		serialized.append(vs[i]);
-	}
-
-	return serialized;
-}
+//string Logic::SerializeParticipantList(vector<string> vs)
+//{
+//	string serialized = "";
+//
+//	for (int i = 0; i < vs.size(); i++) 
+//	{
+//		while (vs[i] != vs.back())
+//		{
+//			serialized.append(vs[i] + ",");
+//		}
+//			
+//		serialized.append(vs[i]);
+//	}
+//
+//	return serialized;
+//}
 
 void Logic::DisplayParticipantList() {
+}
 
 //message functions
 vector<char> Logic::CreateReqMessage(string rq_nbr) {
@@ -103,7 +104,7 @@ vector<char> Logic::CreateRespMessage(std::string rq_nbr) {
 	return char_vector;
 }
 
-vector<char> Logic::CreateInviteMessage(std::string mt_nbr, std::string date_time, std::string topic, std::string requester)
+vector<char> Logic::CreateInviteMessage(string mt_nbr, string date_time, string topic, string requester)
 {
 	// Build a string from all the elements of the message
 	string str = "INVITE";
