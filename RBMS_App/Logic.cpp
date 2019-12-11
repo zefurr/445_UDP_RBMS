@@ -1,21 +1,15 @@
 #include "pch.h"
 #include "Logic.h"
 
-#include <iostream> // for debugging 
+#include <iostream> // for debugging
 
 using namespace std;
-//declare extern vector
-vector<Participant> participantlist;
-vector<Meeting> meetings;
-//vector<string> participantlist;
-//vector<string> meetings;
-vector<int> room1;
-vector<int> room2;
 
 //intialize counters at 0
 int requestCounter = 0;
+int meetingCounter = 0;
 
-Logic& Logic::getInstance() 
+Logic& Logic::getInstance()
 {
 	static Logic _instance;
 	return _instance;
@@ -30,8 +24,7 @@ string Logic::SItoString(sockaddr_in si) {
 }
 
 //create participant and add to server side participant list
-
-void Logic::AddParticipant(sockaddr_in si) 
+void Logic::AddParticipant(sockaddr_in si)
 {
 	string client_addr;
 	stringstream ss;
@@ -40,36 +33,35 @@ void Logic::AddParticipant(sockaddr_in si)
 
 	Participant p(client_addr, si);
 
-	/*if (find(participantlist.begin(), participantlist.end(), p) != participantlist.end()) 
+
+	/*if (find(participantlist.begin(), participantlist.end(), p) != participantlist.end())
 	{
-		cout << "Client is already registered !" << endl;
+	cout << "Client is already registered !" << endl;
 	}
-	else 
+	else
 	{*/
-		participantlist.push_back(p);
-	//	cout << "Client with name " + p.getClientName() + " and with address " + p.getClientAddr() + " successfully registered." << endl;
+
+	s_pl.push_back(p);
+	// cout << "Client with name " + p.getClientName() + " and with address " + p.getClientAddr() + " successfully registered." << endl;
 	//}
 }
 
-//string Logic::SerializeParticipantList(vector<string> vs)
-//{
-//	string serialized = "";
-//
-//	for (int i = 0; i < vs.size(); i++) 
-//	{
-//		while (vs[i] != vs.back())
-//		{
-//			serialized.append(vs[i] + ",");
-//		}
-//			
-//		serialized.append(vs[i]);
-//	}
-//
-//	return serialized;
-//}
+void Logic::DisplayAgenda(Participant)
+{
+
+}
 
 void Logic::DisplayParticipantList() {
+
 }
+
+//client functions
+
+//add clients name in the client side participant list
+void Logic::AddClientName(std::string name) {
+	c_pl.push_back(name);
+}
+
 
 //message functions
 vector<char> Logic::CreateReqMessage(string rq_nbr) {
@@ -80,7 +72,8 @@ vector<char> Logic::CreateReqMessage(string rq_nbr) {
 	str.push_back('|');
 
 	//date and time
-	//cout << "What date and time would you like the meeting at? " 
+
+	cout << "What date and time would you like the meeting at? " << endl;
 
 	//min participants
 
@@ -88,6 +81,8 @@ vector<char> Logic::CreateReqMessage(string rq_nbr) {
 
 	//topic
 
+	const vector<char> char_vector(str.begin(), str.end());
+	return char_vector;
 }
 
 vector<char> Logic::CreateRespMessage(std::string rq_nbr) {
@@ -104,7 +99,7 @@ vector<char> Logic::CreateRespMessage(std::string rq_nbr) {
 	return char_vector;
 }
 
-vector<char> Logic::CreateInviteMessage(string mt_nbr, string date_time, string topic, string requester)
+vector<char> Logic::CreateInviteMessage(std::string mt_nbr, std::string date_time, std::string topic, std::string requester)
 {
 	// Build a string from all the elements of the message
 	string str = "INVITE";
@@ -196,8 +191,8 @@ void Logic::HandleMessage(std::vector<char> message, sockaddr_in src_addr)
 				//Room is available
 				else {
 					// Build meeting object
-					Meeting m (to_string(meetingCounter), freeRoom, req_fields[1], req_fields[4], SItoString(src_addr));
-					meetingCounter++;
+					Meeting m (to_string(m_meetingCounter), freeRoom, req_fields[1], req_fields[4], SItoString(src_addr));
+					m_meetingCounter++;
 					// Start sending invitations
 					for (int k = 0; k < req_pl.size(); k++) {
 						for (int q = 0; q < s_pl.size(); q++) {
@@ -248,8 +243,8 @@ void Logic::HandleMessage(std::vector<char> message, sockaddr_in src_addr)
 				//  Provide all participants with participant list
 				//string serialized = SerializeParticipantList(participantlist);
 
-				for (int i = 0; i < participantlist.size(); i++) {
-					SessionStartMsg startSession(msg_type, participantlist, participantlist[i].getClientSI());
+				for (int i = 0; i < s_pl.size(); i++) {
+					SessionStartMsg startSession(msg_type, s_pl, s_pl[i].getClientSI());
 					/*cout << "TYPE " << startSession.m_Type << endl;
 					cout << "NAME " << startSession.m_Participant << endl;*/
 					m_Sender.SendUDPMessage(startSession.toCharVector(), startSession.m_Destination);

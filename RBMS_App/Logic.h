@@ -15,7 +15,7 @@
 
 //RQ# (incremented each for each request message)
 extern int requestCounter;
-extern int meetingCounter;
+//extern int meetingCounter;
 
 class Logic
 {
@@ -61,6 +61,8 @@ public:
 	int participantCount();
 
 private:
+	int m_meetingCounter = 0;
+
 
 	//room1[793] = true;// room1 booked on 79th day, 3th hour
 	std::vector<bool> room1;
