@@ -20,8 +20,7 @@ private:
 
 public:
 	Participant();
-	Participant(std::string client_addr, sockaddr_in client_si);
-	~Participant();
+	Participant(std::string, sockaddr_in);
 
 	//list of availabilities accessed by MS  
 	std::vector<std::string> availabilites;
@@ -30,7 +29,8 @@ public:
 	std::string getClientName();
 	std::string getClientAddr();
 	sockaddr_in getClientSI();
-	void setClientAddr(std::string client_addr);
+	void setClientAddr(std::string);
+	void setClientName(std::string);
 
 };
 

@@ -31,14 +31,31 @@ void clear_screen(char fill = ' ') {
 using namespace std;
 
 void sMainMenu(Logic& logic) {
-	cout << "ROOM BOOKING AND MEETING SCHEDULER (RBMS)" << endl;
-	cout << "***SESSION IN PROGRESS***" << endl << endl;
+	clear_screen();
 
-	cout << "Enter -1 to shutdown" << endl;
+	string input = "";
+	char choice = '\0';
 
-	int escape = '\0';
-	while (escape != -1) {
-		cin >> escape;
+	while (choice != 'S' && choice != 'X') {
+		cout << "ROOM BOOKING AND MEETING SCHEDULER (RBMS)" << endl;
+		cout << "***SESSION IN PROGRESS***" << endl << endl;
+
+		cout << "Choose an action:" << endl;
+		cout << "\tV) View agenda" << endl << endl;
+
+		cout << "\tX) Exit application" << endl;
+
+		cin >> input;
+		while (!isalpha(input[0])) {
+			input = "";
+			cout << "Invalid input" << endl;
+			cin >> input;
+		}
+		choice = toupper(input[0]);
+
+		if (choice == 'V') {
+			logic.DisplayAgenda();
+		}
 	}
 }
 
@@ -137,7 +154,7 @@ void cMainMenu(Logic& logic) {
 				logic.DisplayParticipantList();
 				break;
 			case '3': // Request a meeting
-				logic.RequestMeeting();
+				logic.RequestMeeting(logic.getMyName());
 				break;
 			case '4': // (Add) Join a meeting
 				break;

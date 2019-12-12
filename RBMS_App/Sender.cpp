@@ -73,7 +73,7 @@ void Sender::ProcessMessages() {
 			m_Dest_Addr.sin_addr = msg.dest.sin_addr;
 
 
-			printf("sendto() : %d", m_Port - m_PortOffset);
+			//printf("sendto() : %d", m_Port - m_PortOffset);
 
 			//send the message
 			if (sendto(m_sock, m_buffer, strlen(m_buffer), 0, (struct sockaddr *) &m_Dest_Addr, m_sockaddr_len) == SOCKET_ERROR)
@@ -90,7 +90,7 @@ void Sender::ProcessMessages() {
 
 			vector<char> raw_vector = msg.content;
 			string msg_content(raw_vector.begin(), raw_vector.end());
-			msg_content.append("|" + dest_addr);
+			msg_content.append(" to " + dest_addr);
 			cout << "\nMessage sent: " << msg_content << endl;
 			// FOR DEBUG OUTPUT - END
 		}

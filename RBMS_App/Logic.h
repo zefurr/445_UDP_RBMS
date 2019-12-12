@@ -27,26 +27,25 @@ public:
 	void Shutdown();
 
 	//client only knows participant names
-	std::vector<std::string> c_pl;
 	std::vector<Participant> s_pl;
 
-	static std::vector<std::string> c_meetings;
-	static std::vector<Meeting> s_meetings;
+	std::vector<std::string> c_meetings;
+	std::vector<Meeting> s_meetings;
 
 	void HandleMessage(std::vector<char>, sockaddr_in = { 0 });
 
 	// User elements start
 	//add a new participant
-	void AddParticipant(sockaddr_in);
+	std::string AddParticipant(sockaddr_in);
 	// function to display the agenda
-	void DisplayAgenda(Participant);
+	void DisplayAgenda();
 	// function to display the participant list
 	void DisplayParticipantList();
 	//client functions
 	void AddClientName(std::string);
 	// User elements start
 
-	void RequestMeeting();
+	void RequestMeeting(std::string);
 
 	//message functions
 
@@ -57,12 +56,16 @@ public:
 	//INVITE|MT#|DATE&TIME|TOPIC|REQUESTER
 	std::vector<char> CreateInviteMessage(std::string, std::string, std::string, std::string);
 
+	std::vector<char> CreateAckMessage(std::string name);
+
 	bool inSession();
 	int participantCount();
 
+	std::string getMyName();
+
 private:
 	int m_meetingCounter = 0;
-
+	std::string m_clientName = "unititialized";
 
 	//room1[793] = true;// room1 booked on 79th day, 3th hour
 	std::vector<bool> room1;
@@ -75,7 +78,7 @@ private:
 	bool m_Alive;
 	void MainLogic();
 	// Basic elements END
-
+	
 	bool m_sessionActive = false;
 
 	// Consumer elements START
@@ -89,6 +92,11 @@ private:
 	// Producer elements END
 
 	std::mutex m_partiMutex;
+	std::mutex m_MeetingMutex;
+
+	bool RoomIsAvailable(std::string);
+
+	void SendInvites(std::string);
 };
 
 //
