@@ -61,6 +61,10 @@ void Logic::DisplayParticipantList() {
 
 }
 
+void Logic::AddClientName(string name) {
+
+}
+
 //message functions
 vector<char> Logic::CreateReqMessage(string requester_name) {
 	string userTemp = "";
@@ -375,6 +379,8 @@ void Logic::HandleMessage(std::vector<char> message, sockaddr_in src_addr)
 
 				// *** OVER HERE
 
+				string name = "";
+
 				// Find all the participants
 				for (int i = first_delim + 1; i < last_delim + 1; i++) {
 					if (msg_content[i] == '|') {
@@ -393,7 +399,6 @@ void Logic::HandleMessage(std::vector<char> message, sockaddr_in src_addr)
 							//populate client side participant list
 							name = msg_content.substr(i, j);
 							AddClientName(name);
-							cout << "FOUND: " << s_pl[0] << endl;
 							i = j; // Place i at the comma (it will get auto incremented past the comma)
 						}
 					}
