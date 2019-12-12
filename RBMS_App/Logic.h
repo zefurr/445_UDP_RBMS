@@ -13,6 +13,8 @@
 #include "Participant.h"
 #include "Meeting.h"
 
+#include <map>
+
 //RQ# (incremented each for each request message)
 extern int requestCounter;
 //extern int meetingCounter;
@@ -22,14 +24,14 @@ class Logic
 public:
 
 	static Logic& getInstance();
-	std::string SItoString(sockaddr_in si);
+	std::string SItoString(sockaddr_in);
+	std::string getNameFromSI(sockaddr_in);
 	void Startup(int);
 	void Shutdown();
 
 	//client only knows participant names
 	std::vector<Participant> s_pl;
 
-	std::vector<std::string> c_meetings;
 	std::vector<Meeting> s_meetings;
 
 	void HandleMessage(std::vector<char>, sockaddr_in = { 0 });
@@ -37,12 +39,16 @@ public:
 	// User elements start
 	//add a new participant
 	std::string AddParticipant(sockaddr_in);
+
+	//add meeting to s_meetings
+	void AddToAgenda(Meeting);
 	// function to display the agenda
 	void DisplayAgenda();
 	// function to display the participant list
 	void DisplayParticipantList();
 	//client functions
 	void AddClientName(std::string);
+	void ChangeStatus(int, std::string, std::string);
 	// User elements start
 
 	void RequestMeeting(std::string);
@@ -57,7 +63,8 @@ public:
 	std::vector<char> CreateInviteMessage(std::string, std::string, std::string, std::string);
 
 	std::vector<char> CreateAckMessage(std::string name);
-
+	std::vector<char> CreateAcceptMessage(std::string meeting_nbr);
+	std::vector<char> CreateRejectMessage(std::string meeting_nbr);
 	bool inSession();
 	int participantCount();
 
@@ -68,8 +75,12 @@ private:
 	std::string m_clientName = "unititialized";
 
 	//room1[793] = true;// room1 booked on 79th day, 3th hour
-	std::vector<bool> room1;
-	std::vector<bool> room2;
+	std::map<std::string, bool> room1;
+	std::map<std::string, bool> room2;
+	std::map<std::string, bool> m_Timeslot;
+	//std::vector<bool> room1;
+	//std::vector<bool> room2;
+	//std::vector<bool> m_Timeslot;
 
 	// Basic elements START
 	Logic();
@@ -93,10 +104,14 @@ private:
 
 	std::mutex m_partiMutex;
 	std::mutex m_MeetingMutex;
+	std::mutex m_AgendaMutex;
+	std::mutex m_TimeslotMutex;
 
 	bool RoomIsAvailable(std::string);
 
 	void SendInvites(std::string);
+
+	void addToAgenda(Meeting);
 };
 
 //

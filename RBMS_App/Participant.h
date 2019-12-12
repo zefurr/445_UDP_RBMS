@@ -23,7 +23,7 @@ public:
 	Participant(std::string, sockaddr_in);
 
 	//list of availabilities accessed by MS  
-	std::vector<std::string> availabilites;
+	//std::vector<std::string> availabilites;
 
 	//getters + setters
 	std::string getClientName();

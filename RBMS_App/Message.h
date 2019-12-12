@@ -28,9 +28,11 @@
 // definitions for messages sent by the server
 #define SESH_START	"START" //both server and client
 #define ACK_REG		"ACK_REGISTER"
+#define RESPONSE	"RESP"
 #define INVITE		"INVITE"
 #define CANCEL		"CANCEL"
 #define ROOM_CHANGE "ROOM_CHANGE"
+#define UNAVAILABLE "UNAVAILABLE"
 
 // Messages which carry no data (Registration, Acknowledgements)
 struct BaseMessage

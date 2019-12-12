@@ -8,8 +8,8 @@ struct Attendee {
 	std::string name;
 	int status = 0;
 	// 0 = No reply
-	// 1 = Reject
-	// 2 = Accept
+	// 1 = Accept
+	// 2 = Reject
 	// 3 = Withdraw
 };
 
@@ -35,7 +35,10 @@ public:
 	Meeting();
 	Meeting(std::string, std::string, std::string, std::string, std::string);
 
-	void makeFromRequest(std::string);
+	void makeFromRequest(std::string, int);
+	void makeFromInvite(std::string);
+
+	void setAttendeeStatus(int,std::string);
 
 	//getters
 	std::string getMeetingNbr();
