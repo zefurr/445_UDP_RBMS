@@ -16,7 +16,9 @@ class Meeting
 {
 private:
 
-	//MT#
+	//RQ#
+	std::string req_nbr;
+	//MT# (will be -1 if only a request, not confirmed meeting)
 	std::string meeting_nbr;
 	//which room
 	std::string room;

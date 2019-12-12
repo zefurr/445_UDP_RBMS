@@ -29,6 +29,7 @@
 #define SESH_START	"START" //both server and client
 #define ACK_REG		"ACK_REGISTER"
 #define INVITE		"INVITE"
+#define RESPONSE    "RESP"
 #define CANCEL		"CANCEL"
 #define ROOM_CHANGE "ROOM_CHANGE"
 

@@ -13,10 +13,6 @@
 #include "Participant.h"
 #include "Meeting.h"
 
-//RQ# (incremented each for each request message)
-extern int requestCounter;
-//extern int meetingCounter;
-
 class Logic
 {
 public:
@@ -44,13 +40,14 @@ public:
 	void DisplayParticipantList();
 	//client functions
 	void AddClientName(std::string);
+	//void CheckAgenda(std::string);
 	// User elements start
 
 	void RequestMeeting();
 
 	//message functions
 
-	std::vector<char> CreateReqMessage(std::string);
+	std::vector<char> CreateReqMessage();
 
 	//RESPONSE|RQ#|UNAVAILABLE
 	std::vector<char> CreateRespMessage(std::string);
@@ -61,6 +58,7 @@ public:
 	int participantCount();
 
 private:
+	int m_requestCounter = 0;
 	int m_meetingCounter = 0;
 
 

@@ -6,16 +6,16 @@ Meeting::Meeting()
 {
 }
 
-Meeting::Meeting(std::string meeting_nbr, std::string room, std::string date_time, std::string topic, std::string requester)
+Meeting::Meeting(std::string req_nbr, std::string room, std::string date_time, std::string topic, std::string requester)
 {
-	this->meeting_nbr = meeting_nbr;
+	this->req_nbr = req_nbr;
 	this->room = room;
 	this->date_time = date_time;
 	this->topic = topic;
 	this->requester = requester;
 
-	//increment MT# 
-	//meetingCounter++;
+	//by default -1 for unconfirmed meeting
+	this->meeting_nbr = "-1";
 }
 
 std::string Meeting::getMeetingNbr() {

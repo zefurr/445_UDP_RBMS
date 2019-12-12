@@ -5,10 +5,6 @@
 
 using namespace std;
 
-//intialize counters at 0
-int requestCounter = 0;
-int meetingCounter = 0;
-
 Logic& Logic::getInstance()
 {
 	static Logic _instance;
@@ -63,14 +59,16 @@ void Logic::AddClientName(std::string name) {
 }
 
 
+
+
 //message functions
-vector<char> Logic::CreateReqMessage(string rq_nbr) {
+vector<char> Logic::CreateReqMessage() {
 	string userTemp = "";
 	string str = "REQUEST";
 	str.push_back('|');
-	str.append(to_string(requestCounter));
+	str.append(to_string(m_requestCounter));
 	str.push_back('|');
-
+	m_requestCounter++;
 	//date and time
 
 	cout << "Enter date and time of the meeting: (111-999)" << endl;
@@ -215,23 +213,14 @@ void Logic::HandleMessage(std::vector<char> message, sockaddr_in src_addr)
 					freeRoom = "Room2";
 					if (!room2[stoi(req_fields[1])]) {
 						freeRoom = "";
-						for (int k = 0; k < req_pl.size(); k++) {
-							for (int q = 0; q < s_pl.size(); q++) {
-								if (req_pl[k] == s_pl[q].getClientAddr()) {
-									m_Sender.SendUDPMessage(
-										CreateRespMessage(req_fields[0]),
-										s_pl[q].getClientSI()
-									);
-								}
-							}
-						}
+						//send 	
+						m_Sender.SendUDPMessage(CreateRespMessage(req_fields[0]),src_addr);
 					}
 				}
 				//Room is available
 				else {
 					// Build meeting object
-					Meeting m (to_string(m_meetingCounter), freeRoom, req_fields[1], req_fields[4], SItoString(src_addr));
-					m_meetingCounter++;
+					Meeting m(req_fields[0], freeRoom, req_fields[1], req_fields[4], SItoString(src_addr));
 					// Start sending invitations
 					for (int k = 0; k < req_pl.size(); k++) {
 						for (int q = 0; q < s_pl.size(); q++) {
@@ -284,8 +273,6 @@ void Logic::HandleMessage(std::vector<char> message, sockaddr_in src_addr)
 
 				for (int i = 0; i < s_pl.size(); i++) {
 					SessionStartMsg startSession(msg_type, s_pl, s_pl[i].getClientSI());
-					/*cout << "TYPE " << startSession.m_Type << endl;
-					cout << "NAME " << startSession.m_Participant << endl;*/
 					m_Sender.SendUDPMessage(startSession.toCharVector(), startSession.m_Destination);
 				}	
 			}
@@ -301,22 +288,27 @@ void Logic::HandleMessage(std::vector<char> message, sockaddr_in src_addr)
 			server_addr.sin_addr.S_un.S_addr = inet_addr(SERVER);
 
 			if (msg_type == SESH_START) { // Session has begun, server is providing participant list
-				// Send an acknowledgement
-				cout << "RECEIVED MESSAGE: " << msg_type << endl;
-				cout << "I SHOULD REPLY!" << endl;
 				cout << "Participant list: " << msg_content << endl;
-
+				string name = "";
 				// Find all the participants
-				for (int i = first_delim + 1; i < last_delim; i++) {
+				for (int i = first_delim + 1; i < last_delim + 1; i++) {
 					if (msg_content[i] == '|') {
+						if (name.empty()) {
+							name = msg_content.substr(first_delim + 1, last_delim - 1);
+							cout << "ONLY ONE NAME: " << name << endl;
+							AddClientName(name);
+						}
 						break; // We reached the end of the participant list
 					}
 					for (int j = i; j < last_delim; j++) {
 						// until you see ,
 						if (msg_content[j] == ',') {
+							cout << "FOUND ," << endl;
 							// We've reached the next participant
-							//String name = msg_content(i, j);
-							//addParticipant(name);
+							//populate client side participant list
+							name = msg_content.substr(i, j);
+							AddClientName(name);
+							cout << "FOUND: " << c_pl[0] << endl;
 							i = j; // Place i at the comma (it will get auto incremented past the comma)
 						}
 					}
@@ -334,6 +326,10 @@ void Logic::HandleMessage(std::vector<char> message, sockaddr_in src_addr)
 				// If available reply with ACCEPT
 
 				// Else unavailable reply with REJECT
+			}
+			else if (msg_type == RESPONSE) { // Server is forwarding a meeting invitation
+				//the room is currently unavailable, try a different timeslot
+				cout << "No rooms are available at this time !" << endl;
 			}
 			else if (msg_type == CANCEL) { // A meeting involving this client has been cancelled
 				// Clear that meeting from the agenda (implicitly making this client available at that meeting time)
