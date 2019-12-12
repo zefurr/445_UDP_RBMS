@@ -46,9 +46,11 @@ void Participant::setClientAddr(std::string client_addr)
 	this->client_addr = client_addr;
 }
 
-Participant::~Participant()
-{
+void Participant::setClientName(std::string name) {
+	this->client_name = name;
 }
+
+
 
 //void ServerSessions::AddParticipant(sockaddr_in si, std::vector<char> data)
 //{
