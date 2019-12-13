@@ -6,16 +6,42 @@
 using namespace std;
 
 //intialize counters at 0
-int requestCounter = 0;
-int meetingCounter = 0;
+//int requestCounter = 0;
+//int meetingCounter = 0;
 
-vector<bool> room1 = {};
-vector<bool> room2 = {};
+//vector<bool> room1 = {};
+//vector<bool> room2 = {};
 
 Logic& Logic::getInstance()
 {
 	static Logic _instance;
 	return _instance;
+}
+
+vector<string> ParseParticipantList(string commaSeperatedList) {
+	vector<string> parsedList;
+	for (int i = 0; i < commaSeperatedList.length(); i++) {
+		for (int j = i; j < commaSeperatedList.length(); j++) {
+			if (commaSeperatedList[j] == ',') {
+				// Every comma you find marks the end of a participant name
+				// Add the participant as an attendee with status 0 (no reply)
+				// Increment i to point to the character following the comma
+				// j will naturally increment to the same position
+				parsedList.push_back({ commaSeperatedList.substr(i, j - i), 0 });
+				i = j + 1;
+			}
+
+			if (j == commaSeperatedList.length() - 1) {
+				// If you are at the last character of the participant list string
+				// This must be the last character of a participant name
+				// Add the participant as an attendee with status 0 (no reply)
+				// Unlike in the case of a comma, j does not point past the name so add +1
+				parsedList.push_back({ commaSeperatedList.substr(i, j - i + 1), 0 });
+				i = j;
+			}
+		}
+	}
+	return parsedList;
 }
 
 int Logic::getMsgMax(string msg_type) {
@@ -68,8 +94,8 @@ int Logic::getMsgMax(string msg_type) {
 		msg_max_fields = 3;
 	}
 	else if (msg_type == INVITE) {
-		//FORMAT: INVITE|MT#|DATE&TIME|TOPIC|REQUESTER|
-		msg_max_fields = 5;
+		//FORMAT: INVITE|MT#|DATE&TIME|TOPIC|REQUESTER|RQ#|
+		msg_max_fields = 6;
 	}
 	else if (msg_type == CONFIRM) {
 		//FORMAT: CONFIRM|MT#|ROOM#|
@@ -256,107 +282,62 @@ void Logic::AddClientName(string name) {
 //2. checks if confirmed equal to min or if its over min
 //3. call create confirm and send to all attendees 
 //4. create scheduled message and send out to requester
-void Logic::ChangeStatus(int newStatus, vector<string> message, string name){
-	string meeting = message[1]; //MT#
+void Logic::ChangeStatus(int newStatus, vector<string> message, string name) {
+	string meeting_nbr = message[1]; //MT#
 
 	// get the source address
 
 	// find the matching participant name
 	for (Participant& p : s_pl) {
-		if (p.getClientName() == name) {
-			// for all participants
-			// if they match the participant name
-			// set their status
-
+		if (p.getClientName() == name) { // Find the participant
+			bool meetingExists = false;
 			for (int i = 0; i < s_meetings.size(); i++) {
-				//find meeting
-				if (s_meetings[i].getMeetingNbr() == meeting) {
+				if (s_meetings[i].getMeetingNbr() == meeting_nbr) { // Find the meeting
+					meetingExists = true;
 					vector<string> attendees = s_meetings[i].getAttendees(-1);
 
 					for (string& a : attendees) {
 						//find attendee
-						if (a == p.getClientName()) {
+						if (a == p.getClientName()) { // This user is an attendee of the meeting
 							//change status of attendee according to newStatus param
 							s_meetings[i].setAttendeeStatus(newStatus, a);
-
-							//check if min reached
-							if (s_meetings[i].checkMinAccepts() == 1) { // If the meeting has just been confirmed
-								vector<string> acceptedAttendees = s_meetings[i].getAttendees(1); //returns names of all accepted attendees
-								if (ScheduleMeeting(s_meetings[i].getMeetingNbr())) {
-									//create confirm message
-									//send out confirm to all attendees who have accepted
-									
-									vector<char> confirm = CreateConfirmMessage(s_meetings[i].getMeetingNbr(), s_meetings[i].getRoom());
-
-									for (string& a : acceptedAttendees) {
-										for (Participant& p : s_pl) {
-											if (a == p.getClientName()) {
-												m_Sender.SendUDPMessage(confirm, p.getClientSI());
-											}
-										}
-									}
-
-									//create scheduled message
-									//send out to requester
-									m_Sender.SendUDPMessage(
-										CreateScheduledMessage(
-											s_meetings[i].getRequestNbr(),
-											s_meetings[i].getMeetingNbr(),
-											s_meetings[i].getRoom(),
-											s_meetings[i].getAttendees(1)
-										),
-										getSIFromName(s_meetings[i].getRequester())
-									);
+							if (s_meetings[i].getRoom() != "X") { // If the meeting is already scheduled
+								if (newStatus == 1) { // Immediately confirm the user and notify requester of the change
+									// This user has accepted the meeting. Confirm them to give them the room number
+									m_Sender.SendUDPMessage(CreateConfirmMessage(s_meetings[i].getMeetingNbr(), s_meetings[i].getRoom()), getSIFromName(name));
+									// Also let the requester know of the confirmed attendee
+									m_Sender.SendUDPMessage(CreateAddedMessage(s_meetings[i].getMeetingNbr(), name), getSIFromName(s_meetings[i].getRequester()));
 								}
-								else { // Meeting could not be scheduled because rooms were all full
-									vector<char> cancel = CreateCancelMessage(meeting, "Below_Minimum");
+								else if (newStatus == 2) {
+									// This user has rejected the meeting
+									// There is no need to inform anyone of anything
+								}
+								else if (newStatus == 3) { // Immediately inform the requester of the change
+									// This user has withdrawn from the meeting
+									// Let the requester know of the withdrawn attendee
+									m_Sender.SendUDPMessage(CreateWithdrawnMessage(s_meetings[i].getMeetingNbr(), name), getSIFromName(s_meetings[i].getRequester()));
 
-									for (string& a : acceptedAttendees) {
-										for (Participant& p : s_pl) {
-											if (a == p.getClientName()) {
-												m_Sender.SendUDPMessage(cancel, p.getClientSI());
-											}
-										}
-									}
-
-									m_Sender.SendUDPMessage(
-										CreateNotScheduledMessage(
-											s_meetings[i].getRequestNbr(),
-											s_meetings[i].getDateTime(),
-											s_meetings[i].getMinAttendees(),
-											s_meetings[i].getAttendees(1),
-											s_meetings[i].getTopic()
-										),
-										getSIFromName(s_meetings[i].getRequester())
-									);
+									// TBD Check if the meeting needs to be cancelled due to low attendance
 								}
 							}
-							else if (s_meetings[i].checkMinAccepts() == 2) { //late confirm to be added individually
-								//create a single confirm message
-								//send out to the attendee that was added
-
-
-								m_Sender.SendUDPMessage(
-									CreateConfirmMessage(
-										s_meetings[i].getMeetingNbr(),
-										s_meetings[i].getRoom()
-									),
-									p.getClientSI()
-								);
+							else { // The meeting is not scheduled yet
+								// Do not inform anyone yet, wait until the meeting is scheduled
+								// This is handled by the SendInvites function
 							}
-							else if (s_meetings[i].checkMinAccepts() == 3){ //withdraw
-								//if this withdrawal causes the confirmed to fall below min
-								//server will send a round of invites to all the attendees who have not accepted
-								//if still not enough confirmed -> cancel the meeting
-							}
+							break; // We found our user and dealt with him, no need to keep looking
 						}
+						// Else user is not an attendee of this meeting, do nothing.
+						//(strictly speaking we could send a cancellation to them but this should never happen)
 					}
-					break; // Meeting was found
+					break; // We found the meeting, no need to keep looking
 				}
-				// We could not find the meeting specified. Assume it was cancelled
-				// Send a cancellation
-				m_Sender.SendUDPMessage(CreateCancelMessage(meeting, "Not_Scheduled"), getSIFromName(name));
-			} // for (int i = 0; i < s_meetings.size(); i++) {
+			}
+			if (!meetingExists) {
+				// We could not find such a meeting
+				// Assume it has been cancelled, inform the user as such
+				m_Sender.SendUDPMessage(CreateCancelMessage(meeting_nbr, "Not_Scheduled"), getSIFromName(name));
+			}
+			break; // We found the participant, no need to keep looking
 		}
 	}
 }
@@ -388,6 +369,8 @@ void Logic::AddToMeeting(string meeting_nbr){
 	for (Meeting& m : s_meetings) {
 		if(m.getMeetingNbr() == meeting_nbr){
 			// book my local calendar for that meeting
+			m_Timeslot.insert_or_assign(m.getDateTime(), true);
+			// We get a confirmation back, we will use that to set our _special_status
 			m.setAttendeeStatus(1, getMyName());
 			//create add message, send to server
 			m_Sender.SendUDPMessage(CreateAddMessage(meeting_nbr), server_addr);
@@ -403,57 +386,24 @@ void Logic::WithdrawFromMeeting(string meeting_nbr) {
 	for (Meeting& m : s_meetings) {
 		if (m.getMeetingNbr() == meeting_nbr){
 			//clear my local calendar for that meeting
+			m_Timeslot.insert_or_assign(m.getDateTime(), false);
+			m._special_status = 3; // We don't get a confirmation so we need to set our own _special_status
 			m.setAttendeeStatus(3, getMyName());
 			//create withdraw message, send to server
 			m_Sender.SendUDPMessage(CreateWithdrawMessage(meeting_nbr), server_addr);
-				
 			return;
 		}
 	}
 	cout << "You are not attending meeting #" << meeting_nbr << endl;
 }
 
-//void Logic::AddedResponse(string meeting_nbr, string name) {
-//	//create added message
-//	//inform organizer an attendee was added
-//	//here we want to send the client_addr of the requester
-//	for (Participant& p : s_pl) { //find requester in s_pl
-//		if (p.getClientName() == name) {
-//			m_Sender.SendUDPMessage(
-//				CreateAddedMessage( //message passed to handle message, then call change status with new status = accept
-//					meeting_nbr,
-//					p.getClientAddr()
-//				),
-//				p.getClientSI() //sent to requester
-//			);
-//		}
-//	}
-//}
-
-//void Logic::WithdrawnResponse(string meeting_nbr, string name){
-//	//create added message
-//		//inform organizer an attendee was added
-//		//here we want to send the client_addr of the requester
-//	for (Participant& p : s_pl) { //find requester in s_pl
-//		if (p.getClientName() == m.getRequester()) {
-//			m_Sender.SendUDPMessage(
-//				CreateWithdrawnMessage( //message passed to handle message, then call change status with new status = accept
-//					meeting_nbr,
-//					p.getClientAddr()
-//				),
-//				p.getClientSI() //sent to requester
-//			);
-//		}
-//	}
-//}
-
 //FUNCTIONS FOR MESSAGES START
-
 vector<char> Logic::CreateReqMessage(string requester_name) {
 	string userTemp = "";
 	string str = REQ_MEET;
 	str.push_back('|');
-	str.append(to_string(requestCounter));
+	str.append(to_string(m_requestCounter++));
+	str.append(getMyName()); // To uniquely identify requests, put requester as suffic
 	str.push_back('|');
 
 	//date and time
@@ -563,8 +513,8 @@ vector<char> Logic::CreateRespMessage(std::string rq_nbr) {
 	return char_vector;
 }
 
-vector<char> Logic::CreateInviteMessage(std::string mt_nbr, std::string date_time, std::string topic, std::string requester) {
-	// FORMAT: INVITE|MT#|DATETIME|TOPIC|REQUESTER|
+vector<char> Logic::CreateInviteMessage(std::string mt_nbr, std::string date_time, std::string topic, std::string requester, std::string req_nbr) {
+	// FORMAT: INVITE|MT#|DATETIME|TOPIC|REQUESTER|RQ#|
 	string str = INVITE;
 	str.push_back('|'); // All valid messages must contain at least one | symbol, one after each field
 	str.append(mt_nbr);
@@ -574,6 +524,8 @@ vector<char> Logic::CreateInviteMessage(std::string mt_nbr, std::string date_tim
 	str.append(topic);
 	str.push_back('|');
 	str.append(requester);
+	str.push_back('|');
+	str.append(req_nbr);
 	str.push_back('|');
 
 	const vector<char> char_vector(str.begin(), str.end());
@@ -657,7 +609,7 @@ vector<char> Logic::CreateScheduledMessage(string req_nbr, string meeting_nbr, s
 
 vector<char> Logic::CreateNotScheduledMessage(string req_nbr, string date_time, string min, vector<string> confirmed_attendees, string topic) {
 	//FORMAT: NOT_SCHEDULED|RQ#|DATETIME|MIN|C0,C1,C2|TOPIC|
-	string str = SCHEDULED;
+	string str = NOT_SCHEDULED;
 	str.push_back('|'); // All valid messages must contain at least one | symbol, one after each field
 	str.append(req_nbr);
 	str.push_back('|');
@@ -691,13 +643,13 @@ vector<char> Logic::CreateAddMessage(string meeting_nbr){
 	return char_vector;
 }
 
-vector<char> Logic::CreateAddedMessage(string meeting_nbr, string client_addr) {
+vector<char> Logic::CreateAddedMessage(string meeting_nbr, string client_name) {
 	//FORMAT: ADDED|MT#|CLIENT_ADDR|
 	string str = ADDED;
 	str.push_back('|'); // All valid messages must contain at least one | symbol, one after each field
 	str.append(meeting_nbr);
 	str.push_back('|');
-	str.append(client_addr);
+	str.append(client_name);
 	str.push_back('|');
 
 	const vector<char> char_vector(str.begin(), str.end());
@@ -715,13 +667,13 @@ vector<char> Logic::CreateWithdrawMessage(string meeting_nbr) {
 	return char_vector;
 }
 
-vector<char> Logic::CreateWithdrawnMessage(string meeting_nbr, string client_addr) {
+vector<char> Logic::CreateWithdrawnMessage(string meeting_nbr, string client_name) {
 	//FORMAT: WITHDRAWN|MT#|CLIENT_ADDR|
 	string str = WITHDRAWN;
 	str.push_back('|'); // All valid messages must contain at least one | symbol, one after each field
 	str.append(meeting_nbr);
 	str.push_back('|');
-	str.append(client_addr);
+	str.append(client_name);
 	str.push_back('|');
 
 	const vector<char> char_vector(str.begin(), str.end());
@@ -740,8 +692,6 @@ vector<char> Logic::CreateCancelMessage(string meeting_nbr, string reason) {
 	const vector<char> char_vector(str.begin(), str.end());
 	return char_vector;
 }
-
-
 //MESSAGES END
 
 int Logic::RoomIsAvailable(string date_time) {
@@ -765,54 +715,142 @@ void Logic::SendInvites(string req_nbr) {
 	vector<string> invitees;
 	Meeting m;
 
+	int timeouts = 0;
+
+	while (timeouts < MAX_TIMEOUTS) {
+		{
+			lock_guard<mutex> meetinglock(m_MeetingMutex);
+			for (Meeting a : s_meetings) {
+				if (a.getRequestNbr() == req_nbr) {
+					invitees = a.getAttendees(0); // 0 means haven't replied yet
+					m = a;
+					break;
+				}
+			}
+		}
+		if (invitees.size() == 0) {
+			break; // All invitees have responded
+		}
+
+		for (string person : invitees) {
+			for (Participant& p : s_pl) {
+				if (p.getClientName() == person) {
+					m_Sender.SendUDPMessage(
+						CreateInviteMessage(
+							m.getMeetingNbr(),
+							m.getDateTime(),
+							m.getTopic(),
+							m.getRequester(),
+							m.getRequestNbr()
+						),
+						p.getClientSI()
+					);
+				}
+			}
+		}
+		std::this_thread::sleep_for(std::chrono::milliseconds(TIMEOUT_WAIT));
+		timeouts++;
+	}
+	// We either timed out after the maximum attempts, or all invitees have responded
 	{
 		lock_guard<mutex> meetinglock(m_MeetingMutex);
 		for (Meeting a : s_meetings) {
 			if (a.getRequestNbr() == req_nbr) {
-				invitees = a.getAttendees(0); // 0 means haven't replied yet
+				invitees = a.getAttendees(1); // 1 means accepted
 				m = a;
+				break;
 			}
+		}
+		string mt_nbr = m.getMeetingNbr();
+
+		// We have the minimum number of attendees
+		// And the meeting has been scheduled (or can be)
+		// The short circuit here is important, ScheduleMeeting is only called if we have enough attendees
+		if (m.checkMinAccepts() == 1 && ScheduleMeeting(mt_nbr) ) {
+			for (Meeting a : s_meetings) {
+				if (a.getRequestNbr() == req_nbr) {
+					m = a; // Doing all of this just to get the updated m
+					break;
+				}
+			}
+
+			// Inform the requester that the meeting is scheduled
+			m_Sender.SendUDPMessage(
+				CreateScheduledMessage(
+					m.getRequestNbr(),
+					mt_nbr,
+					m.getRoom(),
+					invitees
+				),
+				getSIFromName(m.getRequester())
+			);
+
+			// Send confirmations to all attendees who have accepted
+			vector<char> confirm = CreateConfirmMessage(mt_nbr, m.getRoom());
+
+			for (string& a : invitees) {
+				for (Participant& p : s_pl) {
+					if (a == p.getClientName()) {
+						m_Sender.SendUDPMessage(confirm, p.getClientSI());
+					}
+				}
+			}
+		}
+		else { // We do not have sufficient attendees or no room are available -> meeting cannot be scheduled
+			// Inform the requester that the meeting is NOT scheduled
+			m_Sender.SendUDPMessage(
+				CreateNotScheduledMessage(
+					m.getRequestNbr(),
+					m.getDateTime(),
+					m.getMinAttendees(),
+					m.getAttendees(1),
+					m.getTopic()
+				),
+				getSIFromName(m.getRequester())
+			);
+
+			// Send cancellations to all attendees who have accepted
+			vector<char> cancel = CreateCancelMessage(mt_nbr, "Below_Minimum");
+
+			for (string& a : invitees) {
+				for (Participant& p : s_pl) {
+					if (a == p.getClientName()) {
+						m_Sender.SendUDPMessage(cancel, p.getClientSI());
+					}
+				}
+			}
+
+			// Remove the meeting from the agenda so future accepts/adds are met with Cancel messages
+			for (auto it = s_meetings.begin(); it != s_meetings.end(); ) {
+				if (it->getMeetingNbr() == mt_nbr) {
+					it = s_meetings.erase(it); 
+					break;
+				}
+				else {
+					it++;
+				}
+			}
+			cout << "Deleted MT# " << mt_nbr << endl;
 		}
 	}
-
-	for (string person : invitees) {
-		for (Participant p : s_pl) {
-			if (p.getClientName() == person) {
-				m_Sender.SendUDPMessage(
-					CreateInviteMessage(
-						m.getMeetingNbr(),
-						m.getDateTime(),
-						m.getTopic(),
-						m.getRequester()
-					),
-					p.getClientSI()
-				);
-			}
-		}
-	}
-
-	// Match each invitee to an entry in the participant list
-	// retrieve their socket address and send an invite
-	/*for (int k = 0; k < invitees.size(); k++) {
-		for (int q = 0; q < s_pl.size(); q++) {
-			if (invitees[k] == s_pl[q].getClientName()) {
-				m_Sender.SendUDPMessage(
-					CreateInviteMessage(
-						m.getMeetingNbr(),
-						m.getDateTime(),
-						m.getTopic(),
-						m.getRequester()
-					),
-					s_pl[q].getClientSI()
-				);
-			}
-		}
-	}*/
 }
 
 void Logic::addToAgenda(Meeting m) {
 	lock_guard<mutex> meetinglock(m_MeetingMutex);
 	s_meetings.push_back(m);
+}
+
+void Logic::QueueInvites(string meeting_nbr) {
+	if (m_Alive) {
+		{
+			// obtain a writing lock for writing to the message queue
+			lock_guard<mutex> lock(m_InviteMutex);
+			//add message to queue
+			inviteList.push_back(meeting_nbr);
+		}
+		// notify the ProcessMessage thread of new messages
+		m_Cond_NotEmpty.notify_one();
+	}
 }
 
 void Logic::HandleMessage(std::vector<char> message, sockaddr_in src_addr)
@@ -866,7 +904,13 @@ void Logic::HandleMessage(std::vector<char> message, sockaddr_in src_addr)
 					// Regardless, create the meeting object so we can use it to send out invites
 					s_meetings.push_back(m);
 					// Create a thread to send out invites
-					SendInvites(m.getRequestNbr()); // TBD thread this
+					//thread inviteThread(&Logic::SendInvites, m.getRequestNbr());
+					//vecOfThreads.push_back(inviteThread);
+
+					//vecOfThreads.push_back(thread(&Logic::SendInvites, m.getRequestNbr()));
+					//vecOfThreadPtrs.push_back(new thread(&Logic::SendInvites, m.getRequestNbr(), this));
+					//SendInvites(m.getRequestNbr()); // TBD thread this
+					QueueInvites(m.getRequestNbr());
 				}
 				else { // Respond to the requester to let them know no rooms are available
 					m_Sender.SendUDPMessage(CreateRespMessage(m.getRequestNbr()), src_addr);
@@ -890,19 +934,20 @@ void Logic::HandleMessage(std::vector<char> message, sockaddr_in src_addr)
 				//send response to inform requester of add
 				//find addr of requester
 
-				//find addr of requester
-				for (Meeting& m : s_meetings) {
-					if (msg[1] == m.getMeetingNbr()) {
-						for (Participant& p : s_pl) {
-							if (p.getClientName() == m.getRequester()) {
-								m_Sender.SendUDPMessage(CreateAddedMessage(msg[1], getNameFromSI(src_addr)), p.getClientSI());
-								break;
-							}
-						}
-						//WithdrawnResponse(msg[1], m.getRequester());
-						break;
-					}
-				}
+				// DO THE FOR LOOP BELOW INSIDE ChangeStatus!
+				////find addr of requester
+				//for (Meeting& m : s_meetings) {
+				//	if (msg[1] == m.getMeetingNbr()) {
+				//		for (Participant& p : s_pl) {
+				//			if (p.getClientName() == m.getRequester()) {
+				//				m_Sender.SendUDPMessage(CreateAddedMessage(msg[1], getNameFromSI(src_addr)), p.getClientSI());
+				//				break;
+				//			}
+				//		}
+				//		//WithdrawnResponse(msg[1], m.getRequester());
+				//		break;
+				//	}
+				//}
 
 
 				/*for (Meeting& m : s_meetings){
@@ -918,19 +963,19 @@ void Logic::HandleMessage(std::vector<char> message, sockaddr_in src_addr)
 				ChangeStatus(3, msg, getNameFromSI(src_addr));
 				//send response to inform requester of the withdrawn participant
 
-				//find addr of requester
-				for (Meeting& m : s_meetings) {
-					if (msg[1] == m.getMeetingNbr()) {
-						for (Participant& p : s_pl) {
-							if (p.getClientName() == m.getRequester()) {
-								m_Sender.SendUDPMessage(CreateWithdrawnMessage(msg[1], getNameFromSI(src_addr)), p.getClientSI());
-								break;
-							}
-						}
-						//WithdrawnResponse(msg[1], m.getRequester());
-						break;
-					}
-				}
+				////find addr of requester
+				//for (Meeting& m : s_meetings) {
+				//	if (msg[1] == m.getMeetingNbr()) {
+				//		for (Participant& p : s_pl) {
+				//			if (p.getClientName() == m.getRequester()) {
+				//				m_Sender.SendUDPMessage(CreateWithdrawnMessage(msg[1], getNameFromSI(src_addr)), p.getClientSI());
+				//				break;
+				//			}
+				//		}
+				//		//WithdrawnResponse(msg[1], m.getRequester());
+				//		break;
+				//	}
+				//}
 			}
 			else { // Unsupported message (either invalid or meant for client logic)
 
@@ -950,7 +995,6 @@ void Logic::HandleMessage(std::vector<char> message, sockaddr_in src_addr)
 							// j will naturally increment to the same position
 							AddClientName(msg[1].substr(i, j - i));
 							i = j + 1;
-							cout << "CLIENT ADDED" << endl;
 						}
 
 						if (j == msg[1].length() - 1) {
@@ -960,7 +1004,6 @@ void Logic::HandleMessage(std::vector<char> message, sockaddr_in src_addr)
 							// Unlike in the case of a comma, j does not point past the name so add +1
 							AddClientName(msg[1].substr(i, j - i + 1));
 							i = j;
-							cout << "LAST CLIENT ADDED" << endl;
 						}
 					}
 				}
@@ -968,55 +1011,18 @@ void Logic::HandleMessage(std::vector<char> message, sockaddr_in src_addr)
 				lock_guard<mutex> seshlock(m_sessionMutex);
 				m_sessionActive = true;
 
-
-				//string name = "";
-
-				//// Find all the participants
-				//// Format is |c0,c1,c2,c3,c4|...more unwanted content...|...|
-				//for (int i = 0; i < msg[1].length; i++) {
-				//	if (msg[1][i] == '|') {
-				//		if (name.empty()) {
-				//			name = msg_content.substr(first_delim + 1, last_delim - first_delim - 1);
-				//			cout << "ONLY ONE NAME: " << name << endl;
-				//			AddClientName(name);
-				//		}
-				//		break; // We reached the end of the participant list
-				//	}
-				//	for (int j = i; j < last_delim; j++) {
-				//		// until you see ,
-				//		if (msg_content[j] == ',') {
-				//			cout << "FOUND ," << endl;
-				//			// We've reached the next participant
-				//			//populate client side participant list
-				//			name = msg_content.substr(i, j - i - 1);
-				//			AddClientName(name);
-				//			i = j; // Place i at the comma (it will get auto incremented past the comma)
-				//		}
-				//	}
-				//}
-
-				
 			}
 			else if (msg[0] == ACK_REG) { // FORMAT: ACK_REGISTER|C0|
 				// Server has received your registration request
 				// Wait for confirmation of the session start
-
-				//m_clientName = msg_content.substr(first_delim + 1, last_delim - first_delim - 1); // trim off surrounding pipes ('|')
-
 				m_clientName = msg[1];
-				cout << m_clientName << endl;
 			}
-			//else if (msg[0] == REQ_MEET) { // FORMAT: REQUEST|RQ#|DATE&TIME|MIN_PARTICIPANTS|C0,C1,C2|TOPIC|REQUESTER|
-			//	// Format irrelevant. We forward an entire char vector
-			//	// We have created a meeting request, forward it to the server
-			//	m_Sender.SendUDPMessage(message, server_addr);
-			//}
 			else if (msg[0] == RESPONSE) { // FORMAT: RESPONSE|RQ#|UNAVAILABLE|
 				// No meeting rooms available for the current timeslot
 				//room is unavailable
 				cout << "No meeting rooms available for the selected timeslot !" << endl;
 			}
-			else if (msg[0] == INVITE) { // FORMAT: INVITE|MT#|DATE&TIME|TOPIC|REQUESTER|
+			else if (msg[0] == INVITE) { // FORMAT: INVITE|MT#|DATE&TIME|TOPIC|REQUESTER|RQ#|
 				// Server is forwarding a meeting invitation
 				// build the meeting from the invite
 				Meeting m;
@@ -1025,13 +1031,17 @@ void Logic::HandleMessage(std::vector<char> message, sockaddr_in src_addr)
 				if (m.getRequester() == getMyName()) {
 					// I have been invited to my own meeting
 					// It must already be in my agenda
+					for (Meeting& a : s_meetings) {
+						if (a.getRequestNbr() == m.getRequestNbr()) {
+							a.meeting_nbr = msg[1]; // Update the meeting number on the client side
+							break;
+						}
+					}
 				}
 				else {
 					// I have been invited to someone else's meeting
 					addToAgenda(m);
 				}
-				
-
 				lock_guard<mutex> timelock(m_TimeslotMutex);
 				if (m_Timeslot[m.getDateTime()] != true) {
 					m_Timeslot[m.getDateTime()] = true; // Book me
@@ -1058,31 +1068,68 @@ void Logic::HandleMessage(std::vector<char> message, sockaddr_in src_addr)
 				}
 			}
 			else if (msg[0] == CONFIRM) { //FORMAT: CONFIRM|MT#|ROOM#|
-				//sent to all accepted attendees, success message for room has been scheduled
-				cout << "Meeting #" << msg[1] << " is confirmed in " << msg[2] << endl;
+				// provides room# for booked meeting. sent to all accepted attendees, and successful additions
+				for (Meeting& m : s_meetings) {
+					if (m.getMeetingNbr() == msg[1]) {
+						m._special_status = 1;
+						m.room = msg[2];
+					}
+				}
 			}
 			else if (msg[0] == SCHEDULED) { //FORMAT: SCHEDULED|RQ#|MT#|ROOM#|(CONFIRMED)C0,C1,C2|
 				//sent to requester, success message for room has been scheduled
-				cout << "Meeting " << msg[2] << " made from request " << msg[1] << "scheduled in " << msg[3] << endl;
+				for (Meeting& m : s_meetings) {
+					if (m.getRequestNbr() == msg[1]) {
+						m.meeting_nbr = msg[2];
+						m.room = msg[3];
+						vector<string> temp = ParseParticipantList(msg[4]);
+						for (string s : temp) {
+							m.setAttendeeStatus(1, s);
+						}
+					}
+				}
 			}
 			else if (msg[0] == ADDED) { //FORMAT: ADDED|MT#|CLIENT_ADDR|
-				//sent to all accepted attendees, success message for room has been scheduled
-				cout << "Client with address " << msg[2] << "has been added to meeting " << msg[1] << endl;
+				//sent to a requester to inform them another attendee has confirmed their attendance
+				for (Meeting& m : s_meetings) {
+					if (m.getMeetingNbr() == msg[1]) {
+						m.setAttendeeStatus(1, msg[2]);
+					}
+				}
 			}
-
 			else if (msg[0] == WITHDRAWN) { //FORMAT: WITHDRAWN|MT#|CLIENT_ADDR|
-				//sent to all accepted attendees, success message for room has been scheduled
-				cout << "Client with address " << msg[2] << "has been removed from meeting " << msg[1] << endl;
+				//sent to a requester to inform them an attendee has withdrawn their attendance
+				for (Meeting& m : s_meetings) {
+					if (m.getMeetingNbr() == msg[1]) {
+						m.setAttendeeStatus(3, msg[2]);
+					}
+				}
 			}
 			else if (msg[0] == CANCEL) { //FORMAT: CANCEL|MT#|REASON|
 				// A meeting involving this client has been cancelled
 				// Clear that meeting from the agenda (implicitly making this client available at that meeting time)
-
+				for (auto it = s_meetings.begin(); it != s_meetings.end(); ) {
+					if (it->getMeetingNbr() == msg[1]) {
+						m_Timeslot.insert_or_assign(it->getDateTime(), false); // Free my schedule at that time slot
+						it = s_meetings.erase(it); // Remove the meeting from my agenda
+						break;
+					}
+					else {
+						it++;
+					}
+				}
+				
 			}
 			else if (msg[0] == ROOM_CHANGE) { //FORMAT: ROOM_CHANGE|MT#|NEW_ROOM#|
 				// A meeting this client is attending has changed room
 				// If that meeting exists in our agenda
 					// Update the room
+
+				for (Meeting& m : s_meetings) {
+					if (m.getMeetingNbr() == msg[1]) {
+						m.room = msg[2];
+					}
+				}
 			}
 			else { // Unsupported message (either invalid or meant for server logic)
 			}
@@ -1100,33 +1147,32 @@ Logic::Logic()
 }
 
 void Logic::MainLogic() {
-	//while (m_Alive) {
-	//	// aquire a lock on the queue
-	//	unique_lock<mutex> lock(m_Mutex);
-	//	// wait for notify from SendUDPMessage() function
-	//	m_Cond_NotEmpty.wait(lock,
-	//		[&a = m_Alive, &mList = m_IntMsgs]
-	//	{ return (!a || !mList.empty()); });
-	//	// To prevent spurious wake up make sure either 
-	//	// we are not alive OR message list isnt empty
+	while (m_Alive) {
+		// aquire a lock on the queue
+		unique_lock<mutex> lock(m_InviteMutex);
+		// wait for notify from SendUDPMessage() function
+		m_Cond_NotEmpty.wait(lock,
+			[&a = m_Alive, &mList = inviteList]
+		{ return (!a || !mList.empty()); });
+		// To prevent spurious wake up make sure either 
+		// we are not alive OR message list isnt empty
 
-	//// copy the messages to a local var
-	//	vector<int> copy{ m_IntMsgs };
+	// copy the messages to a local var
+		vector<string> copy{ inviteList };
 
-	//	// clear the message list
-	//	m_IntMsgs.clear();
+		// clear the message list
+		inviteList.clear();
 
-	//	// release lock
-	//	lock.unlock();
+		// release lock
+		lock.unlock();
 
-	//	// send messages via the socket
-	//	for (int i : copy)
-	//	{
-	//		// TBD Read the message, do a switch case based on the type of message
-	//		// TBD This varies greatly on whether we are a client or a server
-	//		m_Sender.SendUDPMessage(i);
-	//	}
-	//}
+		// send messages via the socket
+		for (string s : copy)
+		{
+			cout << "SENDING INVITES" << endl;
+			SendInvites(s);
+		}
+	}
 }
 
 void Logic::Startup(int mode)

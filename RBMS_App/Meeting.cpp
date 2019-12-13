@@ -28,20 +28,20 @@ void Meeting::decrementConfirmed() { // decrease confirmed when withdraw message
 //returns 1 if confirmed == min, 2 if confirmed > min, 3 if confirmed < min
 int Meeting::checkMinAccepts(){ //triggered whenever a new status
 	//check the number of attendees with status accept
-	if (stoi(this->confirmed_participants) == stoi(this->min_participants)) {
+	if (stoi(this->confirmed_participants) >= stoi(this->min_participants)) {
 		//minimum reached and should send out all confirms to all participants
 		cout << "Minimum number of accepts reached for meeting #: " + this->meeting_nbr << endl;
 		return 1;
 	}  
-	else if (stoi(this->confirmed_participants) > stoi(this->min_participants)){
-		//meeting already confirmed, send add message for individual late confirm
-		cout << "Meeting has already been confirmed, new participant to be added for meeting #: " + this->meeting_nbr << endl;
-		return 2;
-	}
+	//else if (stoi(this->confirmed_participants) > stoi(this->min_participants)){
+	//	//meeting already confirmed, send add message for individual late confirm
+	//	cout << "Meeting has already been confirmed, new participant to be added for meeting #: " + this->meeting_nbr << endl;
+	//	return 2;
+	//}
 	else {
 		//no messages to be sent, meeting not confirmed yet
 		cout << "Minimum number of accepts insufficient for meeting #: " + this->meeting_nbr << endl;
-		return 3;
+		return 0;
 	}
 }
 
@@ -67,6 +67,7 @@ void Meeting::setAttendeeStatus(int newStatus, string attendeeName){
 				decrementConfirmed();
 				cout << "Status of " << a.name << " changed to WITHDRAW for MT#: " << meeting_nbr << endl;
 			}
+			break;
 		}
 	}
 }
@@ -131,14 +132,17 @@ void Meeting::makeFromRequest(vector<string> request_msg, int meeting_number) {
 }
 
 void Meeting::makeFromInvite(vector<string> invite_msg) {
-	//FORMAT: INVITE|MT#|DATE&TIME|TOPIC|REQUESTER|
+	//FORMAT: INVITE|MT#|DATE&TIME|TOPIC|REQUESTER|RQ#|
 	meeting_nbr = invite_msg[1];
 	date_time = invite_msg[2];
 	topic = invite_msg[3];
 	requester = invite_msg[4];
+	req_nbr = invite_msg[5]; // Added for edge case
 }
 
 void Meeting::PrintInfo(int mode) {
+	cout << "================================" << endl;
+	cout << "MT#: " << meeting_nbr << endl;
 	if (mode == 0) { // If a client is displaying his own list
 		string mystatus = "";
 		switch (_special_status) {
@@ -153,7 +157,7 @@ void Meeting::PrintInfo(int mode) {
 		}
 		cout << "Status: " << mystatus << endl;
 	}
-	cout << "MT#: " << meeting_nbr << endl;
+	cout << "--------------------------------" << endl;
 	cout << "RQ#: " << req_nbr << endl;
 	cout << "ROOM#: " << room << endl;
 	cout << "Min: " << min_participants << endl;
@@ -162,7 +166,18 @@ void Meeting::PrintInfo(int mode) {
 	cout << "Requester: " << requester << endl;
 	cout << "Attendees: " << endl;
 	for (Attendee a : attendees) {
-		cout << "\tName:" << a.name << " Status: " << a.status << endl;
+		string attendeesstatus = "";
+		switch (a.status) {
+		case 0: attendeesstatus = "No reply";
+			break;
+		case 1: attendeesstatus = "Accepted";
+			break;
+		case 2: attendeesstatus = "Rejected";
+			break;
+		case 3: attendeesstatus = "Withdrawn";
+			break;
+		}
+		cout << "\tName:" << a.name << " Status: " << attendeesstatus << endl;
 	}
 }
 

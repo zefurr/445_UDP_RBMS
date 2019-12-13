@@ -8,17 +8,16 @@
 #include <sstream>
 #include <condition_variable>
 #include <algorithm>
+#include <map>
+
 #include "Sender.h"
 #include "Logger.h"
 #include "Message.h"
 #include "Participant.h"
 #include "Meeting.h"
 
-#include <map>
-
-//RQ# (incremented each for each request message)
-extern int requestCounter;
-//extern int meetingCounter;
+#define MAX_TIMEOUTS 3
+#define TIMEOUT_WAIT 1000
 
 class Logic
 {
@@ -86,7 +85,7 @@ public:
 	std::vector<char> CreateRegisterMessage();
 
 	std::vector<char> CreateRespMessage(std::string);
-	std::vector<char> CreateInviteMessage(std::string, std::string, std::string, std::string);
+	std::vector<char> CreateInviteMessage(std::string, std::string, std::string, std::string, std::string);
 	std::vector<char> CreateAckMessage(std::string name);
 	std::vector<char> CreateAcceptMessage(std::string meeting_nbr);
 	std::vector<char> CreateRejectMessage(std::string meeting_nbr);
@@ -113,6 +112,7 @@ private:
 	sockaddr_in server_addr;
 
 	int m_meetingCounter = 0;
+	int m_requestCounter = 0;
 	std::string m_clientName = "unititialized";
 
 	//room1[793] = true;// room1 booked on 79th day, 3th hour
@@ -144,6 +144,7 @@ private:
 	Logger& m_Logger = Logger::getInstance();
 	// Producer elements END
 
+	std::mutex m_InviteMutex;
 	std::mutex m_partiMutex;
 	std::mutex m_MeetingMutex;
 	std::mutex m_TimeslotMutex;
@@ -153,6 +154,13 @@ private:
 	void SendInvites(std::string);
 
 	void addToAgenda(Meeting);
+
+	void QueueInvites(std::string meeting_nbr);
+	std::vector<std::string> inviteList;
+
+	std::vector<std::thread> vecOfThreads;
+	std::vector<std::thread*> vecOfThreadPtrs;
+
 };
 
 //

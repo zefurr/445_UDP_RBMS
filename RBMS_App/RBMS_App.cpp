@@ -63,6 +63,7 @@ void sMainMenu(Logic& logic) {
 
 		if (choice == 'V') {
 			logic.DisplayAgenda();
+			cout << "================================" << endl << endl;
 		}
 	}
 }
@@ -109,8 +110,6 @@ void sRegisterMenu(Logic& logic) {
 
 				int temp = '\0';
 				cout << "Session is starting, send participants list to all clients" << endl;
-				//BaseMessage start_session(SESH_START);
-				//logic.HandleMessage(start_session.toCharVector()); // TBD remove message object
 				logic.StartSession();
 
 				sMainMenu(logic);
@@ -135,7 +134,7 @@ void cMainMenu(Logic& logic) {
 		cout << "*************************" << endl;
 		cout << "***SESSION IN PROGRESS***" << endl;
 		cout << "*************************" << endl << endl;
-		cout << "*** You are " << logic.getMyName() << "***" << endl;
+		cout << "*** You are " << logic.getMyName() << "***" << endl << endl;
 
 		cout << "Choose an action:" << endl;
 		cout << "\t1) View my agenda" << endl;
@@ -161,6 +160,7 @@ void cMainMenu(Logic& logic) {
 				break;
 			case '1': // View my agenda
 				logic.DisplayAgenda(-1); // Display ALL meetings
+				cout << "================================" << endl << endl;
 				break;
 			case '2': // View participant list
 				logic.DisplayParticipantList();
