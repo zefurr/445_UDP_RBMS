@@ -57,15 +57,15 @@ void Meeting::setAttendeeStatus(int newStatus, string attendeeName){
 			if (newStatus == 1 && oldStatus != 1) {
 				//increments confirmed participants in meeting
 				incrementConfirmed();
-				cout << "Status of " << a.name << " changed to ACCEPT for MT#: " << meeting_nbr << "\n" << endl;
+				//cout << "Status of " << a.name << " changed to ACCEPT for MT#: " << meeting_nbr << "\n" << endl;
 			}
 			else if (newStatus == 2 && oldStatus != 2) {
-				cout << "Status of " << a.name << " changed to REJECT for MT#: " << meeting_nbr << "\n" << endl;
+				//cout << "Status of " << a.name << " changed to REJECT for MT#: " << meeting_nbr << "\n" << endl;
 			}
 			else if (newStatus == 3 && oldStatus != 3) {
 				//decrements confirmed participants in meeting
 				decrementConfirmed();
-				cout << "Status of " << a.name << " changed to WITHDRAW for MT#: " << meeting_nbr << "\n" << endl;
+				//cout << "Status of " << a.name << " changed to WITHDRAW for MT#: " << meeting_nbr << "\n" << endl;
 			}
 			break;
 		}
