@@ -710,7 +710,7 @@ int Logic::RoomIsAvailable(string date_time) {
 	return 0;
 }
 
-// TBD thread this, and add timeout
+// Called by the MainLogic() thread
 void Logic::SendInvites(string req_nbr) {
 	vector<string> invitees;
 	Meeting m;
@@ -1118,7 +1118,6 @@ void Logic::HandleMessage(std::vector<char> message, sockaddr_in src_addr)
 						it++;
 					}
 				}
-				
 			}
 			else if (msg[0] == ROOM_CHANGE) { //FORMAT: ROOM_CHANGE|MT#|NEW_ROOM#|
 				// A meeting this client is attending has changed room
@@ -1170,6 +1169,7 @@ void Logic::MainLogic() {
 		for (string s : copy)
 		{
 			cout << "SENDING INVITES" << endl;
+			// TBD maybe SendInvites should be called in detached threads
 			SendInvites(s);
 		}
 	}
