@@ -1024,7 +1024,7 @@ void Logic::HandleMessage(std::vector<char> message, sockaddr_in src_addr)
 				addToAgenda(m); // We may need to look at this meeting later
 
 				lock_guard<mutex> timelock(m_TimeslotMutex);
-				if (m_Timeslot[m.getDateTime()] == false) {
+				if (m_Timeslot[m.getDateTime()] != true) {
 					m_Timeslot[m.getDateTime()] = true; // Book me
 					// I am available at that time slot, send accept message
 					m_Sender.SendUDPMessage(CreateAcceptMessage(m.getMeetingNbr()), server_addr);

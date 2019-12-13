@@ -129,7 +129,7 @@ void cMainMenu(Logic& logic) {
 	string input = "";
 	char choice = '\0';
 
-	while (choice != 'J' && choice != 'X') {
+	while (choice != 'X') {
 		debugWaiting();
 		cout << "MEETING SCHEDULER (MS)" << endl;
 		cout << "***SESSION IN PROGRESS***" << endl << endl;
@@ -138,9 +138,9 @@ void cMainMenu(Logic& logic) {
 		cout << "\t1) View my agenda" << endl;
 		cout << "\t2) View participant list" << endl;
 		cout << "\t3) Request a meeting" << endl;
-		cout << "\t4) Cancel a meeting" << endl << endl;
+		cout << "\t4) Cancel a meeting" << endl;
 		cout << "\t5) (Add) Join a meeting" << endl;
-		cout << "\t6) Withdraw from a meeting" << endl;
+		cout << "\t6) Withdraw from a meeting" << endl << endl;
 
 		cout << "\tX) Exit application" << endl;
 
