@@ -1035,11 +1035,25 @@ void Logic::HandleMessage(std::vector<char> message, sockaddr_in src_addr)
 				lock_guard<mutex> timelock(m_TimeslotMutex);
 				if (m_Timeslot[m.getDateTime()] != true) {
 					m_Timeslot[m.getDateTime()] = true; // Book me
-					// I am available at that time slot, send accept message
+					// I am available at that time slot
+					for (Meeting& a : s_meetings) {
+						if (a.getMeetingNbr() == m.getMeetingNbr()) {
+							a._special_status = 1; // Mark meeting as accepted
+							break;
+						}
+					}
+					// Send accept message
 					m_Sender.SendUDPMessage(CreateAcceptMessage(m.getMeetingNbr()), server_addr);
 				}
 				else {
-					// I am unavailable at that time slot, send reject message
+					// I am unavailable at that time slot
+					for (Meeting& a : s_meetings) {
+						if (a.getMeetingNbr() == m.getMeetingNbr()) {
+							a._special_status = 2; // Mark meeting as rejected
+							break;
+						}
+					}
+					// Send reject message
 					m_Sender.SendUDPMessage(CreateRejectMessage(m.getMeetingNbr()), server_addr);
 				}
 			}
