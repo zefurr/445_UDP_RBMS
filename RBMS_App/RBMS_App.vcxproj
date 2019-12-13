@@ -151,6 +151,7 @@
     </Link>
   </ItemDefinitionGroup>
   <ItemGroup>
+    <ClInclude Include="Logger.h" />
     <ClInclude Include="Meeting.h" />
     <ClInclude Include="Message.h" />
     <ClInclude Include="Participant.h" />
@@ -161,6 +162,7 @@
     <ClInclude Include="shared_winsock.h" />
   </ItemGroup>
   <ItemGroup>
+    <ClCompile Include="Logger.cpp" />
     <ClCompile Include="Meeting.cpp" />
     <ClCompile Include="Message.cpp" />
     <ClCompile Include="Participant.cpp" />

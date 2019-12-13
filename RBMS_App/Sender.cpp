@@ -82,7 +82,7 @@ void Sender::ProcessMessages() {
 				exit(EXIT_FAILURE);
 			}
 
-			// FOR DEBUG OUTPUT - START
+			// FOR LOGGER OUTPUT - START
 			string dest_addr;
 			stringstream ss;
 			ss << inet_ntoa(msg.dest.sin_addr) << ":" << ntohs(msg.dest.sin_port);
@@ -91,8 +91,8 @@ void Sender::ProcessMessages() {
 			vector<char> raw_vector = msg.content;
 			string msg_content(raw_vector.begin(), raw_vector.end());
 			msg_content.append(" to " + dest_addr);
-			cout << "\nMessage sent: " << msg_content << endl;
-			// FOR DEBUG OUTPUT - END
+			m_Logger.Log(msg_content);
+			// FOR LOGGER OUTPUT - END
 		}
 	}
 }

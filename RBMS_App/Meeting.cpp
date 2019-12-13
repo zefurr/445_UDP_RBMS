@@ -2,7 +2,7 @@
 #include "Meeting.h"
 
 using namespace std;
-//TEST
+
 Meeting::Meeting()
 {
 }
@@ -13,10 +13,143 @@ Meeting::Meeting(string meeting_nbr, string room, string date_time, string topic
 	this->room = room;
 	this->date_time = date_time;
 	this->topic = topic;
-	this->requester = requester;
+	this->requester = requester; //name e.g. C1
 
-	//increment MT# 
-	//meetingCounter++;
+}
+
+void Meeting::incrementConfirmed(){ // increase confirmed when accept message received
+	this->confirmed_participants = to_string(stoi(this->confirmed_participants) + 1);
+}
+
+void Meeting::decrementConfirmed() { // decrease confirmed when withdraw message received
+	this->confirmed_participants = to_string(stoi(this->confirmed_participants) - 1);
+}
+
+//returns 1 if confirmed == min, 2 if confirmed > min, 3 if confirmed < min
+int Meeting::checkMinAccepts(){ //triggered whenever a new status
+	//check the number of attendees with status accept
+	if (stoi(this->confirmed_participants) == stoi(this->min_participants)) {
+		//minimum reached and should send out all confirms to all participants
+		cout << "Minimum number of accepts reached for meeting: " + this->meeting_nbr << endl;
+		return 1;
+	}  
+	else if (stoi(this->confirmed_participants) > stoi(this->min_participants)){
+		//meeting already confirmed, send add message for individual late confirm
+		cout << "Meeting has already been confirmed, new participant to be added for meeting: " + this->meeting_nbr << endl;
+		return 2;
+	}
+	else {
+		//no messages to be sent, meeting not confirmed yet
+		cout << "Minimum number of accepts insufficient for meeting: " + this->meeting_nbr << endl;
+		return 3;
+	}
+}
+
+
+void Meeting::setAttendeeStatus(int newStatus, string attendeeName){
+	for (Attendee& a : attendees) {
+		//find attendee using attendeeName param
+		if (a.name == attendeeName) {
+			//set new status
+			int oldStatus = a.status;
+			a.status = newStatus; //1 = accept, 2 = reject, 3 = withdraw, 0 = no reply yet
+
+			if (newStatus == 1 && oldStatus != 1) {
+				//increments confirmed participants in meeting
+				incrementConfirmed();
+				cout << "Status of " << a.name << " changed to ACCEPT for MT#: " << meeting_nbr << endl;
+			}
+			else if (newStatus == 2 && oldStatus != 2) {
+				cout << "Status of " << a.name << " changed to REJECT for MT#: " << meeting_nbr << endl;
+			}
+			else if (newStatus == 3 && oldStatus != 3) {
+				//decrements confirmed participants in meeting
+				decrementConfirmed();
+				cout << "Status of " << a.name << " changed to WITHDRAW for MT#: " << meeting_nbr << endl;
+			}
+		}
+	}
+}
+
+void Meeting::setRoom(int room_number) {
+	if (room_number == 1) {
+		this->room = "room1";
+	}
+	else if (room_number == 2) {
+		this->room = "room2";
+	}
+	else {
+		this->room = "X";
+	}
+}
+
+vector<string> Meeting::getAttendees(int _status) {
+	vector<string> matches;
+	for (Attendee& a : attendees) {
+		if (a.status == _status) {
+			matches.push_back(a.name);
+		}
+		if (_status == -1) { // Return ALL attendees
+			matches.push_back(a.name);
+		}
+	}
+	return matches;
+}
+
+void Meeting::makeFromRequest(vector<string> request_msg, int meeting_number) {
+	//FORMAT: REQUEST|RQ#|DATE&TIME|MIN_PARTICIPANTS|PARTICIPANTS|TOPIC|REQUESTER
+	//		  01234567                              |C0,C1,C2,C3|
+	meeting_nbr = to_string(meeting_number);
+	req_nbr = request_msg[1];
+	date_time = request_msg[2];
+	min_participants = request_msg[3];
+	// for loop handle below attendees from request_msg[4]
+	topic = request_msg[5];
+	requester = request_msg[6];
+
+	for (int i = 0; i < request_msg[4].length(); i++) {
+		for (int j = i; j < request_msg[4].length(); j++) {
+			if (request_msg[4][j] == ',') {
+				// Every comma you find marks the end of a participant name
+				// Add the participant as an attendee with status 0 (no reply)
+				// Increment i to point to the character following the comma
+				// j will naturally increment to the same position
+				attendees.push_back({ request_msg[4].substr(i, j - i), 0 });
+				i = j + 1;
+			}
+
+			if (j == request_msg[4].length() - 1) {
+				// If you are at the last character of the participant list string
+				// This must be the last character of a participant name
+				// Add the participant as an attendee with status 0 (no reply)
+				// Unlike in the case of a comma, j does not point past the name so add +1
+				attendees.push_back({ request_msg[4].substr(i, j - i + 1), 0 });
+				i = j;
+			}
+		}
+	}
+}
+
+void Meeting::makeFromInvite(vector<string> invite_msg) {
+	//FORMAT: INVITE|MT#|DATE&TIME|TOPIC|REQUESTER|
+	meeting_nbr = invite_msg[1];
+	date_time = invite_msg[2];
+	topic = invite_msg[3];
+	requester = invite_msg[4];
+}
+
+void Meeting::PrintInfo() {
+	cout << "MT#: " << meeting_nbr << endl;
+	cout << "RQ#: " << req_nbr << endl;
+	cout << "ROOM#: " << room << endl;
+	cout << "Min: " << min_participants << endl;
+	cout << "Timeslot: " << date_time << endl;
+	cout << "Topic: " << topic << endl;
+	cout << "Requester: " << requester << endl;
+	cout << "Attendees: " << endl;
+	for (Attendee a : attendees) {
+		cout << "\tName:" << a.name << " Status: " << a.status << endl;
+	}
 }
 
 string Meeting::getMeetingNbr() {
@@ -36,98 +169,14 @@ string Meeting::getDateTime() {
 	return this->date_time;
 }
 
+string Meeting::getMinAttendees() {
+	return this->min_participants;
+}
+
 string Meeting::getTopic() {
 	return this->topic;
 }
 
 string Meeting::getRequester() {
 	return this->requester;
-}
-
-void Meeting::setAttendeeStatus(int newStatus, string attendeeName){
-
-	for (Attendee& a : attendees) {
-		if (a.name == attendeeName) {
-			a.status = newStatus;
-		}
-	}
-}
-
-vector<string> Meeting::getAttendees(int _status) {
-	vector<string> matches;
-	for (Attendee a : attendees) {
-		if (a.status == _status) {
-			matches.push_back(a.name);
-		}
-		if (_status = -1) { // Return ALL attendees
-			matches.push_back(a.name);
-		}
-	}
-	return matches;
-}
-
-void Meeting::makeFromRequest(string request_msg, int meeting_number) {
-	//FORMAT: REQUEST|RQ#|DATE&TIME|MIN_PARTICIPANTS|PARTICIPANTS|TOPIC|REQUESTER
-	//		  01234567     
-	vector<string> req_fields; //field[1] = RQ#
-	vector<string> req_pl;
-
-	for (int i = 0; i < request_msg.length(); i++) {
-		for (int j = i; j < request_msg.length(); j++) {
-			//, only in participant list
-			if (request_msg[j] == ',') {
-				cout << req_fields.size() << " - " << request_msg.substr(i, j - i) << endl;
-				req_pl.push_back(request_msg.substr(i, j - i));
-				i = j + 1;
-			}
-			if (request_msg[j] == '|') {
-				cout << req_fields.size() << " - " << request_msg.substr(i, j - i) << endl;
-				req_fields.push_back(request_msg.substr(i, j - i));
-				i = j + 1;
-			}
-		}
-	}
-	meeting_nbr = to_string(meeting_number);
-	req_nbr = req_fields[1];
-	date_time = req_fields[2];
-	min_participants = req_fields[3];
-	for (string name : req_pl) {
-		attendees.push_back({ name, 0 });
-	}
-	attendees.push_back({ req_fields[4], 0 }); // catch the last (or only) attendee
-	topic = req_fields[5];
-	requester = req_fields[6];
-}
-
-void Meeting::makeFromInvite(string invite_msg) {
-	//FORMAT: INVITE|MT#|DATE&TIME|TOPIC|REQUESTER
-	vector<string> inv_fields; //field[0] = RQ#
-	vector<string> req_pl;
-
-	for (int i = 0; i < invite_msg.length(); i++) {
-		for (int j = i; j < invite_msg.length(); j++) {
-			if (invite_msg[j] == '|') {
-				inv_fields.push_back(invite_msg.substr(i, j - i - 1));
-				i = j; // Place i at the comma (it will get auto incremented past the comma)
-			}
-		}
-	}
-	meeting_nbr = inv_fields[1];
-	date_time = inv_fields[2];
-	topic = inv_fields[3];
-	requester = inv_fields[4];
-}
-
-void Meeting::PrintInfo() {
-	cout << "MT#: " << meeting_nbr << endl;
-	cout << "RQ#: " << req_nbr << endl;
-	cout << "ROOM#: " << room << endl;
-	cout << "Min: " << min_participants << endl;
-	cout << "Timeslot: " << date_time << endl;
-	cout << "Topic: " << topic << endl;
-	cout << "Requester: " << requester << endl;
-	cout << "Attendees: " << endl;
-	for (Attendee a : attendees) {
-		cout << "\tName:" << a.name << " Status: " << a.status << endl;
-	}
 }

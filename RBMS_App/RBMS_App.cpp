@@ -8,7 +8,7 @@
 #include <mutex>
 #include <string>
 #include <condition_variable>
-#include "Message.h"
+//#include "Message.h"
 #include "shared_winsock.h"
 #include "Logic.h"
 #include "Receiver.h"
@@ -16,6 +16,7 @@
 #include <windows.h> // For clear_screen()
 
 #define MIN_CLIENTS 0
+#define DEBUGWAIT true
 
 void clear_screen(char fill = ' ') {
 	/*COORD tl = { 0,0 };
@@ -28,6 +29,12 @@ void clear_screen(char fill = ' ') {
 	SetConsoleCursorPosition(console, tl);*/
 }
 
+void debugWaiting() {
+	if (DEBUGWAIT) {
+		Sleep(50);
+	}
+}
+
 using namespace std;
 
 void sMainMenu(Logic& logic) {
@@ -37,6 +44,7 @@ void sMainMenu(Logic& logic) {
 	char choice = '\0';
 
 	while (choice != 'S' && choice != 'X') {
+		debugWaiting();
 		cout << "ROOM BOOKING AND MEETING SCHEDULER (RBMS)" << endl;
 		cout << "***SESSION IN PROGRESS***" << endl << endl;
 
@@ -69,6 +77,7 @@ void sRegisterMenu(Logic& logic) {
 	char choice = '\0';
 
 	while (choice != 'S' && choice != 'X') {
+		debugWaiting();
 		cout << "ROOM BOOKING and MEETING SCHEDULER (RBMS)" << endl << endl;
 
 		cout << "Choose an action:" << endl;
@@ -85,8 +94,7 @@ void sRegisterMenu(Logic& logic) {
 		choice = toupper(input[0]);
 
 		if (choice == 'S') {
-
-
+			debugWaiting();
 			cout << "ROOM BOOKING and MEETING SCHEDULER (RBMS)" << endl << endl;
 
 			cout << "Server accepting registration requests (-1 to end)" << endl << endl;
@@ -97,19 +105,19 @@ void sRegisterMenu(Logic& logic) {
 				cin >> escape;
 			}
 			if (logic.participantCount() >= MIN_CLIENTS) {
-
+				debugWaiting();
 
 				int temp = '\0';
-				cout << "Session is starting ..." << endl;
-				BaseMessage start_session(SESH_START);
-				logic.HandleMessage(start_session.toCharVector()); // TBD remove message object
-				//logic.startSession();
-				cout << "Sent participants list to all clients." << endl;
+				cout << "Session is starting, send participants list to all clients" << endl;
+				//BaseMessage start_session(SESH_START);
+				//logic.HandleMessage(start_session.toCharVector()); // TBD remove message object
+				logic.StartSession();
 
 				sMainMenu(logic);
 			}
 			else {
-
+				debugWaiting();
+				cout << "Too few participants to start session" << endl;
 			}
 		}
 	}
@@ -122,6 +130,7 @@ void cMainMenu(Logic& logic) {
 	char choice = '\0';
 
 	while (choice != 'J' && choice != 'X') {
+		debugWaiting();
 		cout << "MEETING SCHEDULER (MS)" << endl;
 		cout << "***SESSION IN PROGRESS***" << endl << endl;
 
@@ -129,9 +138,9 @@ void cMainMenu(Logic& logic) {
 		cout << "\t1) View my agenda" << endl;
 		cout << "\t2) View participant list" << endl;
 		cout << "\t3) Request a meeting" << endl;
-		cout << "\t4) (Add) Join a meeting" << endl;
-		cout << "\t5) Withdraw from a meeting" << endl;
-		cout << "\t6) foo" << endl << endl;
+		cout << "\t4) Cancel a meeting" << endl << endl;
+		cout << "\t5) (Add) Join a meeting" << endl;
+		cout << "\t6) Withdraw from a meeting" << endl;
 
 		cout << "\tX) Exit application" << endl;
 
@@ -148,7 +157,7 @@ void cMainMenu(Logic& logic) {
 			case 'X': // Exit
 				break;
 			case '1': // View my agenda
-				//logic.printAgenda();
+				logic.DisplayAgenda();
 				break;
 			case '2': // View participant list
 				logic.DisplayParticipantList();
@@ -156,9 +165,17 @@ void cMainMenu(Logic& logic) {
 			case '3': // Request a meeting
 				logic.RequestMeeting(logic.getMyName());
 				break;
-			case '4': // (Add) Join a meeting
+			case '4': // Cancel a meeting
 				break;
-			case '5': // Withdraw from a meeting
+			case '5': // (Add) Join a meeting
+				cout << "Please specify the meeting number:" << endl;
+				cin >> input;
+				logic.AddToMeeting(input);
+				break;
+			case '6': // Withdraw from a meeting
+				cout << "Please specify the meeting number:" << endl;
+				cin >> input;
+				logic.WithdrawFromMeeting(input);
 				break;
 			default:
 				break;
@@ -176,6 +193,7 @@ void cRegisterMenu(Logic& logic) {
 	char choice = '\0';
 
 	while (choice != 'J' && choice != 'X') {
+		debugWaiting();
 		cout << "MEETING SCHEDULER (MS)" << endl << endl;
 
 		cout << "Choose an action:" << endl;
@@ -194,8 +212,7 @@ void cRegisterMenu(Logic& logic) {
 		if (choice == 'J') {
 			cout << "Sending registration request ..." << endl << endl;
 
-			BaseMessage reg_request(REGISTER); // TBD get rid of the message object
-			logic.HandleMessage(reg_request.toCharVector()); // TBD get rid of the message object
+			logic.JoinSession();
 
 			int escape = '\0'; // TBD there are better ways to do this
 			while (escape != -1) {

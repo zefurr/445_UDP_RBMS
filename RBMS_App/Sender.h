@@ -5,15 +5,11 @@
 #include <thread>
 #include <mutex>
 #include <condition_variable>
+#include "Logger.h"
 
 struct Message {
 	std::vector<char> content;
 	sockaddr_in dest;
-};
-
-struct foo {
-	int a;
-	int b;
 };
 
 class Sender
@@ -51,6 +47,6 @@ private:
 	std::condition_variable m_Cond_NotEmpty;
 	// Consumer elements END
 
-
+	Logger& m_Logger = Logger::getInstance();
 };
 

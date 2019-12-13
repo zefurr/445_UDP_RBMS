@@ -8,7 +8,7 @@ class Participant
 private:
 	
 	//participants only identified ip
-	std::string client_addr;
+	std::string client_addr = "";
 	//name
 	std::string client_name;
 	//organizer = 1, participant = 0

@@ -13,14 +13,15 @@ struct Attendee {
 	// 3 = Withdraw
 };
 
-class Meeting
+struct Meeting
 {
-private:
+public:
 
 	std::string meeting_nbr = "-1";
 	std::string req_nbr;
-	std::string room = "X";
+	std::string room = "X"; //room1 or room2
 	std::string min_participants;
+	std::string confirmed_participants = "0";
 	std::string date_time;	// #day #hour
 							// 1-99 day
 							// 1-9 hour
@@ -29,25 +30,28 @@ private:
 	std::vector<Attendee> attendees;
 	std::string requester;
 
-
-
-public:
 	Meeting();
 	Meeting(std::string, std::string, std::string, std::string, std::string);
 
-	void makeFromRequest(std::string, int);
-	void makeFromInvite(std::string);
+	void makeFromRequest(std::vector<std::string>, int);
+	void makeFromInvite(std::vector<std::string>);
 
 	void setAttendeeStatus(int,std::string);
-
+	void setRoom(int = 0);
+	int checkMinAccepts();
+	void incrementConfirmed(); // increase confirmed when accept message received
+	void decrementConfirmed(); // decrease confirmed when withdraw message received
 	//getters
 	std::string getMeetingNbr();
 	std::string getRequestNbr();
 	std::string getRoom();
 	std::string getDateTime();
+	std::string getMinAttendees();
 	std::string getTopic();
 	std::string getRequester();
 	std::vector<std::string> getAttendees(int);
 
 	void PrintInfo();
+
+private:
 };
