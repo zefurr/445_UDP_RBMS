@@ -3,7 +3,7 @@
 #include <winsock2.h>
 #pragma comment(lib,"ws2_32.lib")	// Winsock Library
 
-#define SERVER "132.205.94.185"
+#define SERVER "132.205.64.124"
 //#define SERVER "127.0.0.1"
 #define PORT 8888
 
