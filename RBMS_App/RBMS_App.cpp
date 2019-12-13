@@ -169,9 +169,11 @@ void cMainMenu(Logic& logic) {
 				logic.RequestMeeting(logic.getMyName());
 				break;
 			case '4': // Cancel a meeting
+				cout << "Please specify the meeting number:" << endl;
+				cin >> input;
+				logic.CancelMyMeeting(input);
 				break;
 			case '5': // (Add) Join a meeting
-				logic.DisplayAgenda(0); // Display meetings I have never replied to
 				logic.DisplayAgenda(2); // Display meetings I have rejected
 				logic.DisplayAgenda(3); // Display meetings I have withdrawn from
 				cout << "Please specify the meeting number:" << endl;

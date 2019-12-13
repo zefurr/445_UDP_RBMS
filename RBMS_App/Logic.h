@@ -17,7 +17,7 @@
 #include "Meeting.h"
 
 #define MAX_TIMEOUTS 3
-#define TIMEOUT_WAIT 5000 //in milliseconds
+#define TIMEOUT_WAIT 1000 //in milliseconds
 
 class Logic
 {
@@ -74,6 +74,8 @@ public:
 
 	void CancelMeeting(std::string mt_nbr, std::string reason);
 
+	void CancelMyMeeting(std::string);
+
 	void RoomChange(std::string timeslot, std::string room);
 
 	//message functions
@@ -96,6 +98,8 @@ public:
 	std::vector<char> CreateAddedMessage(std::string meeting_nbr, std::string client_addr);
 	std::vector<char> CreateWithdrawMessage(std::string meeting_nbr);
 	std::vector<char> CreateWithdrawnMessage(std::string meeting_nbr, std::string client_addr);
+
+	std::vector<char> CreateRequesterCancelMessage(std::string meeting_nbr);
 
 	std::vector<char> CreateCancelMessage(std::string meeting_nbr, std::string reason);
 
@@ -151,7 +155,7 @@ private:
 
 	int RoomIsAvailable(std::string);
 
-	void SendInvites(std::string);
+	void SendInvites(std::string, int mode = 0);
 
 	void addToAgenda(Meeting);
 

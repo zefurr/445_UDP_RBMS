@@ -30,6 +30,7 @@
 #define ACK_REG			"ACK_REGISTER"
 #define RESPONSE		"RESP"
 #define INVITE			"INVITE"
+#define REQ_CANCEL		"REQ_CANCEL"
 #define CANCEL			"CANCEL"
 #define ROOM_CHANGE		"ROOM_CHANGE"
 #define UNAVAILABLE		"UNAVAILABLE"
