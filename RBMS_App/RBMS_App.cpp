@@ -132,7 +132,10 @@ void cMainMenu(Logic& logic) {
 	while (choice != 'X') {
 		debugWaiting();
 		cout << "MEETING SCHEDULER (MS)" << endl;
-		cout << "***SESSION IN PROGRESS***" << endl << endl;
+		cout << "*************************" << endl;
+		cout << "***SESSION IN PROGRESS***" << endl;
+		cout << "*************************" << endl << endl;
+		cout << "*** You are " << logic.getMyName() << "***" << endl;
 
 		cout << "Choose an action:" << endl;
 		cout << "\t1) View my agenda" << endl;
@@ -157,7 +160,7 @@ void cMainMenu(Logic& logic) {
 			case 'X': // Exit
 				break;
 			case '1': // View my agenda
-				logic.DisplayAgenda();
+				logic.DisplayAgenda(-1); // Display ALL meetings
 				break;
 			case '2': // View participant list
 				logic.DisplayParticipantList();
@@ -168,11 +171,15 @@ void cMainMenu(Logic& logic) {
 			case '4': // Cancel a meeting
 				break;
 			case '5': // (Add) Join a meeting
+				logic.DisplayAgenda(0); // Display meetings I have never replied to
+				logic.DisplayAgenda(2); // Display meetings I have rejected
+				logic.DisplayAgenda(3); // Display meetings I have withdrawn from
 				cout << "Please specify the meeting number:" << endl;
 				cin >> input;
 				logic.AddToMeeting(input);
 				break;
 			case '6': // Withdraw from a meeting
+				logic.DisplayAgenda(1); // Display meetings I have accepted
 				cout << "Please specify the meeting number:" << endl;
 				cin >> input;
 				logic.WithdrawFromMeeting(input);

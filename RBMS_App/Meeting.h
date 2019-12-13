@@ -16,7 +16,7 @@ struct Attendee {
 struct Meeting
 {
 public:
-
+	int _special_status = 0; // For client only, to know my status for the meeting
 	std::string meeting_nbr = "-1";
 	std::string req_nbr;
 	std::string room = "X"; //room1 or room2
@@ -51,7 +51,7 @@ public:
 	std::string getRequester();
 	std::vector<std::string> getAttendees(int);
 
-	void PrintInfo();
+	void PrintInfo(int);
 
 private:
 };

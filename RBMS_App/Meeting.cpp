@@ -138,7 +138,21 @@ void Meeting::makeFromInvite(vector<string> invite_msg) {
 	requester = invite_msg[4];
 }
 
-void Meeting::PrintInfo() {
+void Meeting::PrintInfo(int mode) {
+	if (mode == 0) { // If a client is displaying his own list
+		string mystatus = "";
+		switch (_special_status) {
+		case '0': mystatus = "No reply";
+			break;
+		case '1': mystatus = "Accepted";
+			break;
+		case '2': mystatus = "Rejected";
+			break;
+		case '3': mystatus = "Withdrawn";
+			break;
+		}
+		cout << "Status: " << mystatus << endl;
+	}
 	cout << "MT#: " << meeting_nbr << endl;
 	cout << "RQ#: " << req_nbr << endl;
 	cout << "ROOM#: " << room << endl;

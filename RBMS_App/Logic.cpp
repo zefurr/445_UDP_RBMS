@@ -228,7 +228,9 @@ void Logic::AddToAgenda(Meeting m) {
 void Logic::DisplayAgenda(int status) {
 	lock_guard<mutex> meetinglock(m_MeetingMutex);
 	for (Meeting& m : s_meetings) {
-		m.PrintInfo();
+		if (m._special_status == status || status == -1) {
+			m.PrintInfo(m_Mode);
+		}
 	}
 }
 
@@ -367,7 +369,7 @@ void Logic::RequestMeeting(string requester_name) {
 	// Make a meeting from the request, implicitly booking myself at that time slot
 	Meeting m;
 	m.makeFromRequest(CharVectorToStringVector(mycharvector, { 0 }), -1);
-
+	s_meetings.push_back(m);
 	// Send the request to the server
 	m_Sender.SendUDPMessage(mycharvector, server_addr);
 	
@@ -1020,8 +1022,15 @@ void Logic::HandleMessage(std::vector<char> message, sockaddr_in src_addr)
 				Meeting m;
 				m.makeFromInvite(msg);
 				
-				//push m into s_meetings
-				addToAgenda(m); // We may need to look at this meeting later
+				if (m.getRequester() == getMyName()) {
+					// I have been invited to my own meeting
+					// It must already be in my agenda
+				}
+				else {
+					// I have been invited to someone else's meeting
+					addToAgenda(m);
+				}
+				
 
 				lock_guard<mutex> timelock(m_TimeslotMutex);
 				if (m_Timeslot[m.getDateTime()] != true) {
