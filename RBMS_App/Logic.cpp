@@ -943,6 +943,7 @@ void Logic::HandleMessage(std::vector<char> message, sockaddr_in src_addr)
 							// j will naturally increment to the same position
 							AddClientName(msg[1].substr(i, j - i));
 							i = j + 1;
+							cout << "CLIENT ADDED" << endl;
 						}
 
 						if (j == msg[1].length() - 1) {
@@ -952,6 +953,7 @@ void Logic::HandleMessage(std::vector<char> message, sockaddr_in src_addr)
 							// Unlike in the case of a comma, j does not point past the name so add +1
 							AddClientName(msg[1].substr(i, j - i + 1));
 							i = j;
+							cout << "LAST CLIENT ADDED" << endl;
 						}
 					}
 				}

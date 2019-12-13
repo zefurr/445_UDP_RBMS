@@ -30,17 +30,17 @@ int Meeting::checkMinAccepts(){ //triggered whenever a new status
 	//check the number of attendees with status accept
 	if (stoi(this->confirmed_participants) == stoi(this->min_participants)) {
 		//minimum reached and should send out all confirms to all participants
-		cout << "Minimum number of accepts reached for meeting: " + this->meeting_nbr << endl;
+		cout << "Minimum number of accepts reached for meeting #: " + this->meeting_nbr << endl;
 		return 1;
 	}  
 	else if (stoi(this->confirmed_participants) > stoi(this->min_participants)){
 		//meeting already confirmed, send add message for individual late confirm
-		cout << "Meeting has already been confirmed, new participant to be added for meeting: " + this->meeting_nbr << endl;
+		cout << "Meeting has already been confirmed, new participant to be added for meeting #: " + this->meeting_nbr << endl;
 		return 2;
 	}
 	else {
 		//no messages to be sent, meeting not confirmed yet
-		cout << "Minimum number of accepts insufficient for meeting: " + this->meeting_nbr << endl;
+		cout << "Minimum number of accepts insufficient for meeting #: " + this->meeting_nbr << endl;
 		return 3;
 	}
 }
