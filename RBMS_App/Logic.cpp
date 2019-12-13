@@ -830,7 +830,7 @@ void Logic::SendInvites(string req_nbr) {
 					it++;
 				}
 			}
-			cout << "Deleted MT# " << mt_nbr << endl;
+			//cout << "Deleted MT# " << mt_nbr << endl;
 		}
 	}
 }
@@ -908,7 +908,7 @@ void Logic::HandleMessage(std::vector<char> message, sockaddr_in src_addr)
 					//vecOfThreads.push_back(inviteThread);
 
 					//vecOfThreads.push_back(thread(&Logic::SendInvites, m.getRequestNbr()));
-					//vecOfThreadPtrs.push_back(new thread(&Logic::SendInvites, m.getRequestNbr(), this));
+					//vecOfThreadPtrs.push_back(new thread(&Logic::SendInvites, this, m.getRequestNbr()));
 					//SendInvites(m.getRequestNbr()); // TBD thread this
 					QueueInvites(m.getRequestNbr());
 				}
@@ -1168,9 +1168,11 @@ void Logic::MainLogic() {
 		// send messages via the socket
 		for (string s : copy)
 		{
-			cout << "SENDING INVITES" << endl;
 			// TBD maybe SendInvites should be called in detached threads
-			SendInvites(s);
+			//thread inviteThread(&Logic::SendInvites, this, s);
+			//inviteThread.detach();
+			vecOfThreadPtrs.push_back(new thread(&Logic::SendInvites, this, s));
+			//SendInvites(s);
 		}
 	}
 }
@@ -1195,6 +1197,12 @@ void Logic::Shutdown()
 	// If we send a message but expect a reply, we should keep the receiver open until sender thread terminates
 	// If we receive a message and need to reply, we should keep the sender open until we do
 	// Logic will be the one issuing these instructions, so where does it land?
+	for (thread* ptr : vecOfThreadPtrs) {
+		if (ptr->joinable()) {
+			ptr->join();
+		}
+	}
+
 	cout << "Shutdown Receiver...";
 	//m_Receiver.Shutdown(); // TBD recvfrom is blocking, can't shutdown // Circular dependency
 	cout << "DONE" << endl;

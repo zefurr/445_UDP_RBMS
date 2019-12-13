@@ -17,7 +17,7 @@
 #include "Meeting.h"
 
 #define MAX_TIMEOUTS 3
-#define TIMEOUT_WAIT 1000
+#define TIMEOUT_WAIT 5000 //in milliseconds
 
 class Logic
 {
