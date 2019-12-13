@@ -142,13 +142,13 @@ void Meeting::PrintInfo(int mode) {
 	if (mode == 0) { // If a client is displaying his own list
 		string mystatus = "";
 		switch (_special_status) {
-		case '0': mystatus = "No reply";
+		case 0: mystatus = "No reply";
 			break;
-		case '1': mystatus = "Accepted";
+		case 1: mystatus = "Accepted";
 			break;
-		case '2': mystatus = "Rejected";
+		case 2: mystatus = "Rejected";
 			break;
-		case '3': mystatus = "Withdrawn";
+		case 3: mystatus = "Withdrawn";
 			break;
 		}
 		cout << "Status: " << mystatus << endl;
