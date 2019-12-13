@@ -484,17 +484,22 @@ vector<char> Logic::CreateReqMessage(string requester_name) {
 	while (userTemp != "-1") {
 		cin >> userTemp;
 		if (userTemp != "-1") {
+			bool found = false;
 			for (int i = 0; i < s_pl.size(); i++){
-				if (s_pl[i].getClientName() != userTemp) {
-					cout << "Client does not exist !" << endl;
-				}
-				else {
+				if (s_pl[i].getClientName() == userTemp) {
 					if (!first_time) {
 						str.push_back(',');
 					}
 					first_time = false;
 					str.append(userTemp);
+					found = true;
 				}
+				if (found) {
+					break;
+				}
+			}
+			if (!found) {
+				cout << "Client does not exist !" << endl;
 			}
 		}
 	}
@@ -869,12 +874,12 @@ void Logic::HandleMessage(std::vector<char> message, sockaddr_in src_addr)
 			else if (msg[0] == ACCEPT) { //FORMAT: ACCEPT|MT#|
 				// A client is accepting a meeting invitation
 				//change status to accept for client who sent msg
-				ChangeStatus(2, msg, getNameFromSI(src_addr));
+				ChangeStatus(1, msg, getNameFromSI(src_addr));
 			}
 			else if (msg[0] == REJECT) { //FORMAT: REJECT|MT#|
 				// A client is rejecting a meeting invitation
 				//change status to reject for client who sent msg
-				ChangeStatus(1, msg, getNameFromSI(src_addr));
+				ChangeStatus(2, msg, getNameFromSI(src_addr));
 			}
 			else if (msg[0] == ADD) { //FORMAT: ADD|MT#|
 				// A client is joining a previously rejected meeting
